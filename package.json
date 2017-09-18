@@ -1,0 +1,27 @@
+{
+	"name": "function-queue",
+	"version": "0.0.1",
+	"description": "An alternative to Promises.",
+	"author": {
+		"name": "András Parditka"
+	},
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/andraaspar/function-queue.git"
+	},
+	"bugs": {
+		"url": "https://github.com/andraaspar/function-queue/issues"
+	},
+	"homepage": "https://github.com/andraaspar/function-queue#readme",
+	"devDependencies": {
+		"@types/jasmine": "^2.5.53",
+		"jasmine": "^2.6.0",
+		"rimraf": "^2.6.1",
+		"typescript": "^2.4.1"
+	},
+	"scripts": {
+		"compile": "rimraf *.js *.d.ts && tsc && yarn run test",
+		"test": "jasmine"
+	}
+}
