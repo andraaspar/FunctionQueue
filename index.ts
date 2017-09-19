@@ -214,7 +214,11 @@ export class FunctionQueue<T = any> {
 					this._isAwaitingCallback = true
 					if (item.defer) {
 						setTimeout(() => {
-							item.f(this._value, this.getResolveForItem(item), this.getRejectForItem(item))
+							try {
+								item.f(this._value, this.getResolveForItem(item), this.getRejectForItem(item))
+							} catch (e) {
+								this.reject(e, this._value)
+							}
 						}, 0)
 					} else {
 						item.f(this._value, this.getResolveForItem(item), this.getRejectForItem(item))
@@ -245,7 +249,11 @@ export class FunctionQueue<T = any> {
 					this._isAwaitingCallback = true
 					if (item.defer) {
 						setTimeout(() => {
-							item.f(e, this._value, this.getResolveForItem(item), this.getRejectForItem(item))
+							try {
+								item.f(e, this._value, this.getResolveForItem(item), this.getRejectForItem(item))
+							} catch (e) {
+								this.reject(e)
+							}
 						}, 0)
 					} else {
 						item.f(e, this._value, this.getResolveForItem(item), this.getRejectForItem(item))
