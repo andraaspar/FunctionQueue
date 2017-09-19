@@ -1,6 +1,7 @@
 /.gitignore
 /.vscode
 /*.ts
+/coverage
 /node_modules
 /tests.js
 

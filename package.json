@@ -16,12 +16,13 @@
 	"homepage": "https://github.com/andraaspar/function-queue#readme",
 	"devDependencies": {
 		"@types/jasmine": "^2.5.53",
+		"istanbul": "^0.4.5",
 		"jasmine": "^2.6.0",
 		"rimraf": "^2.6.1",
 		"typescript": "^2.4.1"
 	},
 	"scripts": {
 		"compile": "rimraf *.js *.d.ts && tsc && yarn run test",
-		"test": "jasmine"
+		"test": "istanbul cover node_modules/jasmine/bin/jasmine.js"
 	}
 }
