@@ -1,6 +1,6 @@
 {
-	"name": "@andraaspar/function-queue",
-	"version": "0.0.1",
+	"name": "fun-q",
+	"version": "0.1.0",
 	"description": "An alternative to Promises.",
 	"author": {
 		"name": "András Parditka"
@@ -8,12 +8,12 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/andraaspar/function-queue.git"
+		"url": "https://github.com/andraaspar/fun-q.git"
 	},
 	"bugs": {
-		"url": "https://github.com/andraaspar/function-queue/issues"
+		"url": "https://github.com/andraaspar/fun-q/issues"
 	},
-	"homepage": "https://github.com/andraaspar/function-queue#readme",
+	"homepage": "https://github.com/andraaspar/fun-q#readme",
 	"devDependencies": {
 		"@types/jasmine": "^2.5.53",
 		"istanbul": "^0.4.5",

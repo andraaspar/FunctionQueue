@@ -1,11 +1,11 @@
-export type TFunctionQueueResolve<T> = (v?: T) => void
-export type TFunctionQueueReject<T> = (e?: any, v?: T) => void
-export type TFunctionQueueOnResolveAsync<T> = (v: T, resolve: TFunctionQueueResolve<T>, reject: TFunctionQueueReject<T>) => void
-export type TFunctionQueueOnResolveSync<T> = (v: T) => T | undefined | void
-export type TFunctionQueueOnRejectAsync<T> = (e: any, v: T, resolve: TFunctionQueueResolve<T>, reject: TFunctionQueueReject<T>) => void
-export type TFunctionQueueOnRejectSync<T> = (e: any, v: T) => T | undefined | void
+export type TFunQResolve<T> = (v?: T) => void
+export type TFunQReject<T> = (e?: any, v?: T) => void
+export type TFunQOnResolveAsync<T> = (v: T, resolve: TFunQResolve<T>, reject: TFunQReject<T>) => void
+export type TFunQOnResolveSync<T> = (v: T) => T | undefined | void
+export type TFunQOnRejectAsync<T> = (e: any, v: T, resolve: TFunQResolve<T>, reject: TFunQReject<T>) => void
+export type TFunQOnRejectSync<T> = (e: any, v: T) => T | undefined | void
 
-export class FunctionQueueItem {
+export class FunQItem {
 	isAsync: boolean
 	handlesBoth: boolean
 	isFinal: boolean
@@ -17,49 +17,49 @@ export class FunctionQueueItem {
 		this.handlesBoth = this.isFinal || !!o.handlesBoth
 	}
 }
-export class FunctionQueueItemOnResolve extends FunctionQueueItem { }
-export class FunctionQueueItemOnResolveAsync<T> extends FunctionQueueItemOnResolve {
-	f: TFunctionQueueOnResolveAsync<T>
-	constructor(o: { f: TFunctionQueueOnResolveAsync<T>, defer?: boolean }) {
+export class FunQItemOnResolve extends FunQItem { }
+export class FunQItemOnResolveAsync<T> extends FunQItemOnResolve {
+	f: TFunQOnResolveAsync<T>
+	constructor(o: { f: TFunQOnResolveAsync<T>, defer?: boolean }) {
 		super({ isAsync: true, defer: o.defer })
 		this.f = o.f
 	}
 }
-export class FunctionQueueItemOnResolveSync<T> extends FunctionQueueItemOnResolve {
-	f: TFunctionQueueOnResolveSync<T>
-	constructor(o: { f: TFunctionQueueOnResolveSync<T>, defer?: boolean }) {
+export class FunQItemOnResolveSync<T> extends FunQItemOnResolve {
+	f: TFunQOnResolveSync<T>
+	constructor(o: { f: TFunQOnResolveSync<T>, defer?: boolean }) {
 		super({ defer: o.defer })
 		this.f = o.f
 	}
 }
-export class FunctionQueueItemOnReject extends FunctionQueueItem { }
-export class FunctionQueueItemOnRejectAsync<T> extends FunctionQueueItemOnReject {
-	f: TFunctionQueueOnRejectAsync<T>
-	constructor(o: { f: TFunctionQueueOnRejectAsync<T>, defer?: boolean, isFinal?: boolean, handlesBoth?: boolean }) {
+export class FunQItemOnReject extends FunQItem { }
+export class FunQItemOnRejectAsync<T> extends FunQItemOnReject {
+	f: TFunQOnRejectAsync<T>
+	constructor(o: { f: TFunQOnRejectAsync<T>, defer?: boolean, isFinal?: boolean, handlesBoth?: boolean }) {
 		super({ isAsync: true, defer: o.defer, isFinal: o.isFinal, handlesBoth: o.handlesBoth })
 		this.f = o.f
 	}
 }
-export class FunctionQueueItemOnRejectSync<T> extends FunctionQueueItemOnReject {
-	f: TFunctionQueueOnRejectSync<T>
-	constructor(o: { f: TFunctionQueueOnRejectSync<T>, defer?: boolean, isFinal?: boolean, handlesBoth?: boolean }) {
+export class FunQItemOnRejectSync<T> extends FunQItemOnReject {
+	f: TFunQOnRejectSync<T>
+	constructor(o: { f: TFunQOnRejectSync<T>, defer?: boolean, isFinal?: boolean, handlesBoth?: boolean }) {
 		super({ defer: o.defer, isFinal: o.isFinal, handlesBoth: o.handlesBoth })
 		this.f = o.f
 	}
 }
 
-export class FunctionQueue<T = any> {
+export class FunQ<T = any> {
 
 	// private _name?: string
 	private _value: T
 	private _error: any
-	private _items: FunctionQueueItem[] = []
+	private _items: FunQItem[] = []
 	private _isAwaitingCallback = false
 	private _isInProcessLoop = false
 	private _isStarted = false
 	private _isFinalized = false
 	private _errorWarningRef: any
-	private _item: FunctionQueueItem | undefined
+	private _item: FunQItem | undefined
 
 	constructor(o: {
 		// name?: string,
@@ -69,81 +69,81 @@ export class FunctionQueue<T = any> {
 		// this._name = o.name
 		this._value = o.value
 	}
-	onValueDoWithCallback(f: TFunctionQueueOnResolveAsync<T>, o: { defer?: boolean } = {}) {
-		this.add(new FunctionQueueItemOnResolveAsync({
+	onValueDoWithCallback(f: TFunQOnResolveAsync<T>, o: { defer?: boolean } = {}) {
+		this.add(new FunQItemOnResolveAsync({
 			f,
 			defer: o.defer,
 		}))
 		return this
 	}
-	afterValueDoWithCallback(f: TFunctionQueueOnResolveAsync<T>) {
+	afterValueDoWithCallback(f: TFunQOnResolveAsync<T>) {
 		return this.onValueDoWithCallback(f, { defer: true })
 	}
-	onValue(f: TFunctionQueueOnResolveSync<T>, o: { defer?: boolean } = {}) {
-		this.add(new FunctionQueueItemOnResolveSync({
+	onValue(f: TFunQOnResolveSync<T>, o: { defer?: boolean } = {}) {
+		this.add(new FunQItemOnResolveSync({
 			f,
 			defer: o.defer,
 		}))
 		return this
 	}
-	afterValue(f: TFunctionQueueOnResolveSync<T>) {
+	afterValue(f: TFunQOnResolveSync<T>) {
 		return this.onValue(f, { defer: true })
 	}
-	onErrorDoWithCallback(f: TFunctionQueueOnRejectAsync<T>, o: { defer?: boolean } = {}) {
-		this.add(new FunctionQueueItemOnRejectAsync({
+	onErrorDoWithCallback(f: TFunQOnRejectAsync<T>, o: { defer?: boolean } = {}) {
+		this.add(new FunQItemOnRejectAsync({
 			f,
 			defer: o.defer,
 		}))
 		return this
 	}
-	afterErrorDoWithCallback(f: TFunctionQueueOnRejectAsync<T>) {
+	afterErrorDoWithCallback(f: TFunQOnRejectAsync<T>) {
 		return this.onErrorDoWithCallback(f, { defer: true })
 	}
-	onError(f: TFunctionQueueOnRejectSync<T>, o: { defer?: boolean } = {}) {
-		this.add(new FunctionQueueItemOnRejectSync({
+	onError(f: TFunQOnRejectSync<T>, o: { defer?: boolean } = {}) {
+		this.add(new FunQItemOnRejectSync({
 			f,
 			defer: o.defer,
 		}))
 		return this
 	}
-	afterError(f: TFunctionQueueOnRejectSync<T>) {
+	afterError(f: TFunQOnRejectSync<T>) {
 		return this.onError(f, { defer: true })
 	}
-	onErrorOrValueDoWithCallback(f: TFunctionQueueOnRejectAsync<T>, o: { defer?: boolean } = {}) {
-		this.add(new FunctionQueueItemOnRejectAsync({
+	onErrorOrValueDoWithCallback(f: TFunQOnRejectAsync<T>, o: { defer?: boolean } = {}) {
+		this.add(new FunQItemOnRejectAsync({
 			f,
 			handlesBoth: true,
 			defer: o.defer,
 		}))
 		return this
 	}
-	afterErrorOrValueDoWithCallback(f: TFunctionQueueOnRejectAsync<T>) {
+	afterErrorOrValueDoWithCallback(f: TFunQOnRejectAsync<T>) {
 		return this.onErrorOrValueDoWithCallback(f, { defer: true })
 	}
-	onErrorOrValue(f: TFunctionQueueOnRejectSync<T>, o: { defer?: boolean } = {}) {
-		this.add(new FunctionQueueItemOnRejectSync({
+	onErrorOrValue(f: TFunQOnRejectSync<T>, o: { defer?: boolean } = {}) {
+		this.add(new FunQItemOnRejectSync({
 			f,
 			handlesBoth: true,
 			defer: o.defer,
 		}))
 		return this
 	}
-	afterErrorOrValue(f: TFunctionQueueOnRejectSync<T>) {
+	afterErrorOrValue(f: TFunQOnRejectSync<T>) {
 		return this.onErrorOrValue(f, { defer: true })
 	}
-	onFinishedDoWithCallback(f: TFunctionQueueOnRejectAsync<T>, o: { defer?: boolean } = {}) {
-		this.add(new FunctionQueueItemOnRejectAsync({
+	onFinishedDoWithCallback(f: TFunQOnRejectAsync<T>, o: { defer?: boolean } = {}) {
+		this.add(new FunQItemOnRejectAsync({
 			f,
 			isFinal: true,
 			defer: o.defer,
 		}))
 		return this
 	}
-	afterFinishedDoWithCallback(f: TFunctionQueueOnRejectAsync<T>) {
+	afterFinishedDoWithCallback(f: TFunQOnRejectAsync<T>) {
 		return this.onFinishedDoWithCallback(f, { defer: true })
 	}
-	onFinished(f: TFunctionQueueOnRejectSync<T>, o: { defer?: boolean, atEnd?: boolean } = {}) {
-		this.add(new FunctionQueueItemOnRejectSync({
+	onFinished(f: TFunQOnRejectSync<T>, o: { defer?: boolean, atEnd?: boolean } = {}) {
+		this.add(new FunQItemOnRejectSync({
 			f,
 			isFinal: true,
 			defer: o.defer,
@@ -152,7 +152,7 @@ export class FunctionQueue<T = any> {
 			})
 		return this
 	}
-	afterFinished(f: TFunctionQueueOnRejectSync<T>, o: { defer?: boolean, atEnd?: boolean } = {}) {
+	afterFinished(f: TFunQOnRejectSync<T>, o: { defer?: boolean, atEnd?: boolean } = {}) {
 		return this.onFinished(f, { defer: true, ...o })
 	}
 	start() {
@@ -163,9 +163,9 @@ export class FunctionQueue<T = any> {
 		}
 		return this
 	}
-	protected add(item: FunctionQueueItem, o: { atEnd?: boolean } = {}) {
+	protected add(item: FunQItem, o: { atEnd?: boolean } = {}) {
 		if (this._isFinalized && (!item.isFinal || !o.atEnd)) {
-			throw new Error(`Adding non-final item to finalized FunctionQueue.`)
+			throw new Error(`Adding non-final item to finalized FunQ.`)
 		}
 		let index = this._items.length
 		if (!o.atEnd) {
@@ -195,7 +195,7 @@ export class FunctionQueue<T = any> {
 			}
 			this._isInProcessLoop = false
 			if (this._error) {
-				this._errorWarningRef = setTimeout(() => console.error('Unhandled error in FunctionQueue:', this._error))
+				this._errorWarningRef = setTimeout(() => console.error('Unhandled error in FunQ:', this._error))
 			}
 		}
 		return this
@@ -203,13 +203,13 @@ export class FunctionQueue<T = any> {
 	protected isProcessing() {
 		return this._isInProcessLoop || this._isAwaitingCallback
 	}
-	protected execFunction(item: FunctionQueueItem) {
+	protected execFunction(item: FunQItem) {
 		// this.log('execFunction item:', item)
 		this._item = item
 		this._isAwaitingCallback = false
 		try {
 			let hasError = typeof this._error !== 'undefined'
-			if (item instanceof FunctionQueueItemOnResolveAsync) {
+			if (item instanceof FunQItemOnResolveAsync) {
 				if (!hasError) {
 					this._isAwaitingCallback = true
 					if (item.defer) {
@@ -224,7 +224,7 @@ export class FunctionQueue<T = any> {
 						item.f(this._value, this.getResolveForItem(item), this.getRejectForItem(item))
 					}
 				}
-			} else if (item instanceof FunctionQueueItemOnResolveSync) {
+			} else if (item instanceof FunQItemOnResolveSync) {
 				if (!hasError) {
 					if (item.defer) {
 						this._isAwaitingCallback = true
@@ -239,7 +239,7 @@ export class FunctionQueue<T = any> {
 						this.setValueIfDefined(item.f(this._value))
 					}
 				}
-			} else if (item instanceof FunctionQueueItemOnRejectAsync) {
+			} else if (item instanceof FunQItemOnRejectAsync) {
 				if (item.isFinal) {
 					this._isFinalized = true
 				}
@@ -259,7 +259,7 @@ export class FunctionQueue<T = any> {
 						item.f(e, this._value, this.getResolveForItem(item), this.getRejectForItem(item))
 					}
 				}
-			} else if (item instanceof FunctionQueueItemOnRejectSync) {
+			} else if (item instanceof FunQItemOnRejectSync) {
 				if (item.isFinal) {
 					this._isFinalized = true
 				}
@@ -302,14 +302,14 @@ export class FunctionQueue<T = any> {
 		this._item = undefined
 		this.process()
 	}
-	protected getResolveForItem(item: FunctionQueueItem): TFunctionQueueResolve<T> {
+	protected getResolveForItem(item: FunQItem): TFunQResolve<T> {
 		return v => {
 			if (this._item === item) {
 				this.resolve(v)
 			}
 		}
 	}
-	protected getRejectForItem(item: FunctionQueueItem): TFunctionQueueReject<T> {
+	protected getRejectForItem(item: FunQItem): TFunQReject<T> {
 		return (e, v) => {
 			if (this._item === item) {
 				this.reject(e, v)

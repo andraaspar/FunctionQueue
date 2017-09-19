@@ -1,10 +1,10 @@
-import { FunctionQueue } from './index'
+import { FunQ } from './index'
 
-describe('FunctionQueue', () => {
+describe('FunQ', () => {
 	describe('instance', () => {
 		it('Can be passed a value.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 
@@ -12,7 +12,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Can be started.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 
@@ -24,7 +24,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Can be finalized.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 
@@ -42,7 +42,7 @@ describe('FunctionQueue', () => {
 	describe('onValue', () => {
 		it('Receives value and can change it.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -55,7 +55,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Receives value and can leave it as is.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -67,7 +67,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Does not change the value when throwing an error in onValue.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -84,7 +84,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May return null to unset value.', () => {
 
-			let q = new FunctionQueue<{} | null>({
+			let q = new FunQ<{} | null>({
 				value: {},
 			})
 				.onValue(v => {
@@ -96,7 +96,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May return undefined to leave value unchanged.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -108,7 +108,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May set defer to postpone execution till after the current function.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -122,7 +122,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Stacks onValue calls.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -146,7 +146,7 @@ describe('FunctionQueue', () => {
 			let onValue1 = jasmine.createSpy('onValue')
 			let onValue2 = jasmine.createSpy('onValue')
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -165,7 +165,7 @@ describe('FunctionQueue', () => {
 
 			let consoleError = spyOn(console, 'error')
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -182,7 +182,7 @@ describe('FunctionQueue', () => {
 	describe('onValueDoWithCallback', () => {
 		it('May resolve immediately.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValueDoWithCallback((v, resolve) => {
@@ -196,7 +196,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May not reject after it resolved.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValueDoWithCallback((v, resolve, reject) => {
@@ -211,7 +211,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May not resolve after it’s been rejected.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValueDoWithCallback((v, resolve, reject) => {
@@ -226,7 +226,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May reject with no error.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValueDoWithCallback((v, resolve, reject) => {
@@ -240,7 +240,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May throw.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValueDoWithCallback((v, resolve, reject) => {
@@ -255,7 +255,7 @@ describe('FunctionQueue', () => {
 	describe('afterValue', () => {
 		it('Executes after the current function.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.afterValue(v => {
@@ -273,7 +273,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May throw.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.afterValue(v => {
@@ -290,7 +290,7 @@ describe('FunctionQueue', () => {
 	describe('afterValueDoWithCallback', () => {
 		it('Executes after the current function.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.afterValueDoWithCallback((v, resolve, reject) => {
@@ -308,7 +308,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May reject.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.afterValueDoWithCallback((v, resolve, reject) => {
@@ -323,7 +323,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May throw.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.afterValueDoWithCallback((v, resolve, reject) => {
@@ -342,7 +342,7 @@ describe('FunctionQueue', () => {
 
 			let onError = jasmine.createSpy('onError')
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onError(onError)
@@ -352,7 +352,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Will be called if there’s an error.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -373,7 +373,7 @@ describe('FunctionQueue', () => {
 
 			let onErrorDoWithCallback = jasmine.createSpy('onError')
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onErrorDoWithCallback(onErrorDoWithCallback)
@@ -383,7 +383,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Will be called if there’s an error.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -400,7 +400,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May reject immediately.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -418,7 +418,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May throw.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -438,7 +438,7 @@ describe('FunctionQueue', () => {
 	describe('afterError', () => {
 		it('Executes after the current function.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -460,7 +460,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May throw.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -480,7 +480,7 @@ describe('FunctionQueue', () => {
 	describe('afterErrorDoWithCallback', () => {
 		it('Executes after the current function.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(() => {
@@ -502,7 +502,7 @@ describe('FunctionQueue', () => {
 		})
 		it('May throw.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -522,7 +522,7 @@ describe('FunctionQueue', () => {
 	describe('onErrorOrValue', () => {
 		it('Receives values.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onErrorOrValue((e, v) => {
@@ -536,7 +536,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Catches errors.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -555,7 +555,7 @@ describe('FunctionQueue', () => {
 	describe('onErrorOrValueDoWithCallback', () => {
 		it('Receives values.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onErrorOrValueDoWithCallback((e, v, resolve, reject) => {
@@ -569,7 +569,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Catches errors.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -588,7 +588,7 @@ describe('FunctionQueue', () => {
 	describe('afterErrorOrValue', () => {
 		it('Executes after the current function.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -612,7 +612,7 @@ describe('FunctionQueue', () => {
 	describe('afterErrorOrValueDoWithCallback', () => {
 		it('Executes after the current function.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(() => {
@@ -636,7 +636,7 @@ describe('FunctionQueue', () => {
 	describe('onFinished', () => {
 		it('Supports onFinished.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onFinished((e, v) => {
@@ -650,7 +650,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Supports not returning a value from onFinished.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onFinished((e, v) => {
@@ -663,7 +663,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Can splice functions before onFinished.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onFinished((e, v) => {
@@ -691,7 +691,7 @@ describe('FunctionQueue', () => {
 		})
 		it('onFinished stacks in reverse.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onFinished((e, v) => {
@@ -714,7 +714,7 @@ describe('FunctionQueue', () => {
 			expect(q.getValue()).toBe(333, 'The value from 3rd onFinished should be received.')
 		})
 		it('onFinished supports atEnd.', () => {
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onFinished((e, v) => {
@@ -738,7 +738,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Can’t prepend onFinished after finalized.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onFinished(() => { })
@@ -748,7 +748,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Can append onFinished after finalized.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onFinished(() => 111)
@@ -761,7 +761,7 @@ describe('FunctionQueue', () => {
 	describe('onFinishedDoWithCallback', () => {
 		it('Receives values.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onFinishedDoWithCallback((e, v, resolve, reject) => {
@@ -775,7 +775,7 @@ describe('FunctionQueue', () => {
 		})
 		it('Catches errors.', () => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(v => {
@@ -801,7 +801,7 @@ describe('FunctionQueue', () => {
 				return 111
 			}).and.callThrough()
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.afterFinished(afterFinished)
@@ -819,7 +819,7 @@ describe('FunctionQueue', () => {
 				return 111
 			}).and.callThrough()
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.start()
@@ -832,7 +832,7 @@ describe('FunctionQueue', () => {
 	describe('afterFinishedDoWithCallback', () => {
 		it('Executes after the current function.', (done) => {
 
-			let q = new FunctionQueue({
+			let q = new FunQ({
 				value: 42,
 			})
 				.onValue(() => {
