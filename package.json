@@ -1,5 +1,5 @@
 {
-	"name": "function-queue",
+	"name": "@andraaspar/function-queue",
 	"version": "0.0.1",
 	"description": "An alternative to Promises.",
 	"author": {
