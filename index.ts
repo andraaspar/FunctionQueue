@@ -217,7 +217,7 @@ export class FunctionQueue<T = any> {
 							try {
 								item.f(this._value, this.getResolveForItem(item), this.getRejectForItem(item))
 							} catch (e) {
-								this.reject(e, this._value)
+								this.reject(e)
 							}
 						}, 0)
 					} else {
@@ -232,7 +232,7 @@ export class FunctionQueue<T = any> {
 							try {
 								this.resolve(item.f(this._value))
 							} catch (e) {
-								this.reject(e, this._value)
+								this.reject(e)
 							}
 						}, 0)
 					} else {
@@ -272,7 +272,7 @@ export class FunctionQueue<T = any> {
 							try {
 								this.resolve(item.f(e, this._value))
 							} catch (e) {
-								this.reject(e, this._value)
+								this.reject(e)
 							}
 						}, 0)
 					} else {

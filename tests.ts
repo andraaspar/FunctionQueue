@@ -10,6 +10,34 @@ describe('FunctionQueue', () => {
 
 			expect(q.getValue()).toBe(42)
 		})
+		it('Can be started.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+
+			expect(q.isStarted()).toBe(false, 'Not started by default.')
+
+			q.start()
+
+			expect(q.isStarted()).toBe(true, 'Started after a call to start.')
+		})
+		it('Can be finalized.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+
+			expect(q.isFinalized()).toBe(false, 'Not finalized by default.')
+
+			q.start()
+
+			expect(q.isFinalized()).toBe(false, 'Not finalized by start.')
+
+			q.onFinished(() => { })
+
+			expect(q.isFinalized()).toBe(true, 'Finalized after onFinished.')
+		})
 	})
 	describe('onValue', () => {
 		it('Receives value and can change it.', () => {
@@ -132,6 +160,23 @@ describe('FunctionQueue', () => {
 			expect(q.getValue()).toBe(42, 'The original value should be received.')
 			expect(onValue1).not.toHaveBeenCalled()
 			expect(onValue2).not.toHaveBeenCalled()
+		})
+		it('Shows an error in console after an unhandled error.', (done) => {
+
+			let consoleError = spyOn(console, 'error')
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error'
+				})
+				.start()
+
+			setTimeout(() => {
+				expect(consoleError).toHaveBeenCalledTimes(1)
+				done()
+			}, 10)
 		})
 	})
 	describe('onValueDoWithCallback', () => {
@@ -323,6 +368,157 @@ describe('FunctionQueue', () => {
 			expect(q.getValue()).toBe(111, 'Should receive the value from onError.')
 		})
 	})
+	describe('onErrorDoWithCallback', () => {
+		it('Will not be called if there’s no error.', () => {
+
+			let onErrorDoWithCallback = jasmine.createSpy('onError')
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onErrorDoWithCallback(onErrorDoWithCallback)
+				.start()
+
+			expect(onErrorDoWithCallback).not.toHaveBeenCalled()
+		})
+		it('Will be called if there’s an error.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error'
+				})
+				.onErrorDoWithCallback((e, v, resolve, reject) => {
+					expect(e).toBe('error', 'Should receive the error.')
+					expect(v).toBe(42, 'Should receive the value.')
+					resolve(111)
+				})
+				.start()
+
+			expect(q.getValue()).toBe(111, 'Should receive the value from onError.')
+		})
+		it('May reject immediately.', (done) => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error 1'
+				})
+				.onErrorDoWithCallback((e, v, resolve, reject) => {
+					reject('error 2')
+				})
+				.onFinished((e, v) => {
+					expect(e).toBe('error 2', 'Should receive the error from onErrorDoWithCallback.')
+					expect(v).toBe(42, 'Should receive the original value.')
+					done()
+				})
+				.start()
+		})
+		it('May throw.', (done) => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error 1'
+				})
+				.onErrorDoWithCallback((v, resolve, reject) => {
+					throw 'error 2'
+				})
+				.onFinished((e, v) => {
+					expect(e).toBe('error 2', 'Should receive the error from onErrorDoWithCallback.')
+					expect(v).toBe(42, 'Should receive the original value.')
+					done()
+				})
+				.start()
+		})
+	})
+	describe('afterError', () => {
+		it('Executes after the current function.', (done) => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error'
+				})
+				.afterError((e, v) => {
+					expect(e).toBe('error', 'Should receive the error.')
+					expect(v).toBe(42, 'Should receive the value.')
+					return 111
+				})
+				.onFinished((e, v) => {
+					expect(e).toBeUndefined('Should not receive an error.')
+					expect(v).toBe(111, 'Should receive the value from afterValue.')
+					done()
+				})
+				.start()
+
+			expect(q.getValue()).toBe(42, 'Should receive the original value.')
+		})
+		it('May throw.', (done) => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error 1'
+				})
+				.afterError((e, v) => {
+					throw 'error 2'
+				})
+				.onFinished((e, v) => {
+					expect(e).toBe('error 2', 'Should receive the error from afterError.')
+					expect(v).toBe(42, 'Should receive the original value.')
+					done()
+				})
+				.start()
+		})
+	})
+	describe('afterErrorDoWithCallback', () => {
+		it('Executes after the current function.', (done) => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(() => {
+					throw 'error'
+				})
+				.afterErrorDoWithCallback((e, v, resolve, reject) => {
+					expect(e).toBe('error', 'Should receive the error.')
+					expect(v).toBe(42, 'Should receive the value.')
+					resolve(111)
+				})
+				.onFinished((e, v) => {
+					expect(e).toBeUndefined('Should not receive an error.')
+					expect(v).toBe(111, 'Should receive the value from afterErrorDoWithCallback.')
+					done()
+				})
+				.start()
+
+			expect(q.getValue()).toBe(42, 'Should receive the original value.')
+		})
+		it('May throw.', (done) => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error 1'
+				})
+				.afterErrorDoWithCallback((e, v, resolve, reject) => {
+					throw 'error 2'
+				})
+				.onFinished((e, v) => {
+					expect(e).toBe('error 2', 'Should receive the error from afterErrorDoWithCallback.')
+					expect(v).toBe(42, 'Should receive the original value.')
+					done()
+				})
+				.start()
+		})
+	})
 	describe('onErrorOrValue', () => {
 		it('Receives values.', () => {
 
@@ -354,6 +550,87 @@ describe('FunctionQueue', () => {
 				.start()
 
 			expect(q.getValue()).toBe(111, 'The value from onErrorOrValue should be received.')
+		})
+	})
+	describe('onErrorOrValueDoWithCallback', () => {
+		it('Receives values.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onErrorOrValueDoWithCallback((e, v, resolve, reject) => {
+					expect(e).toBeUndefined('No error should be received.')
+					expect(v).toBe(42, 'Value should be received.')
+					resolve(111)
+				})
+				.start()
+
+			expect(q.getValue()).toBe(111, 'The value from onErrorOrValueDoWithCallback should be received.')
+		})
+		it('Catches errors.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error'
+				})
+				.onErrorOrValueDoWithCallback((e, v, resolve, reject) => {
+					expect(e).toBe('error', 'Error should be received.')
+					expect(v).toBe(42, 'Value should be received.')
+					resolve(111)
+				})
+				.start()
+
+			expect(q.getValue()).toBe(111, 'The value from onErrorOrValueDoWithCallback should be received.')
+		})
+	})
+	describe('afterErrorOrValue', () => {
+		it('Executes after the current function.', (done) => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error'
+				})
+				.afterErrorOrValue((e, v) => {
+					expect(e).toBe('error', 'Should receive the error.')
+					expect(v).toBe(42, 'Should receive the value.')
+					return 111
+				})
+				.onFinished((e, v) => {
+					expect(e).toBeUndefined('Should not receive an error.')
+					expect(v).toBe(111, 'Should receive the value from afterErrorOrValue.')
+					done()
+				})
+				.start()
+
+			expect(q.getValue()).toBe(42, 'Should receive the original value.')
+		})
+	})
+	describe('afterErrorOrValueDoWithCallback', () => {
+		it('Executes after the current function.', (done) => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(() => {
+					throw 'error'
+				})
+				.afterErrorOrValueDoWithCallback((e, v, resolve, reject) => {
+					expect(e).toBe('error', 'Should receive the error.')
+					expect(v).toBe(42, 'Should receive the value.')
+					resolve(111)
+				})
+				.onFinished((e, v) => {
+					expect(e).toBeUndefined('Should not receive an error.')
+					expect(v).toBe(111, 'Should receive the value from afterErrorOrValueDoWithCallback .')
+					done()
+				})
+				.start()
+
+			expect(q.getValue()).toBe(42, 'Should receive the original value.')
 		})
 	})
 	describe('onFinished', () => {
@@ -459,42 +736,6 @@ describe('FunctionQueue', () => {
 
 			expect(q.getValue()).toBe(333, 'The value from 3rd onFinished should be received.')
 		})
-		it('afterFinished runs after current function.', (done) => {
-
-			let afterFinished = jasmine.createSpy('afterFinished', (e: any, v: number) => {
-				expect(e).toBeUndefined('No error should occur 1.')
-				expect(v).toBe(42, 'Value should be received.')
-				done()
-				return 111
-			}).and.callThrough()
-
-			let q = new FunctionQueue({
-				value: 42,
-			})
-				.afterFinished(afterFinished)
-				.start()
-
-			expect(q.getValue()).toBe(42, 'The original value should be received.')
-			expect(afterFinished).not.toHaveBeenCalled()
-		})
-		it('afterFinished works if added after start.', (done) => {
-
-			let afterFinished = jasmine.createSpy('afterFinished', (e: any, v: number) => {
-				expect(e).toBeUndefined('No error should occur 1.')
-				expect(v).toBe(42, 'Value should be received.')
-				done()
-				return 111
-			}).and.callThrough()
-
-			let q = new FunctionQueue({
-				value: 42,
-			})
-				.start()
-				.afterFinished(afterFinished)
-
-			expect(q.getValue()).toBe(42, 'The original value should be received.')
-			expect(afterFinished).not.toHaveBeenCalled()
-		})
 		it('Can’t prepend onFinished after finalized.', () => {
 
 			let q = new FunctionQueue({
@@ -515,6 +756,101 @@ describe('FunctionQueue', () => {
 
 			expect(() => q.onFinished(() => 222, { atEnd: true })).not.toThrow()
 			expect(q.getValue()).toBe(222, 'The value from the appended onFinished should be received.')
+		})
+	})
+	describe('onFinishedDoWithCallback', () => {
+		it('Receives values.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onFinishedDoWithCallback((e, v, resolve, reject) => {
+					expect(e).toBeUndefined('No error should be received.')
+					expect(v).toBe(42, 'Value should be received.')
+					resolve(111)
+				})
+				.start()
+
+			expect(q.getValue()).toBe(111, 'The value from onFinishedDoWithCallback should be received.')
+		})
+		it('Catches errors.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error'
+				})
+				.onFinishedDoWithCallback((e, v, resolve, reject) => {
+					expect(e).toBe('error', 'Error should be received.')
+					expect(v).toBe(42, 'Value should be received.')
+					resolve(111)
+				})
+				.start()
+
+			expect(q.getValue()).toBe(111, 'The value from onFinishedDoWithCallback should be received.')
+		})
+	})
+	describe('afterFinished', () => {
+		it('Runs after current function.', (done) => {
+
+			let afterFinished = jasmine.createSpy('afterFinished', (e: any, v: number) => {
+				expect(e).toBeUndefined('No error should occur 1.')
+				expect(v).toBe(42, 'Value should be received.')
+				done()
+				return 111
+			}).and.callThrough()
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.afterFinished(afterFinished)
+				.start()
+
+			expect(q.getValue()).toBe(42, 'The original value should be received.')
+			expect(afterFinished).not.toHaveBeenCalled()
+		})
+		it('Works if added after start.', (done) => {
+
+			let afterFinished = jasmine.createSpy('afterFinished', (e: any, v: number) => {
+				expect(e).toBeUndefined('No error should occur 1.')
+				expect(v).toBe(42, 'Value should be received.')
+				done()
+				return 111
+			}).and.callThrough()
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.start()
+				.afterFinished(afterFinished)
+
+			expect(q.getValue()).toBe(42, 'The original value should be received.')
+			expect(afterFinished).not.toHaveBeenCalled()
+		})
+	})
+	describe('afterFinishedDoWithCallback', () => {
+		it('Executes after the current function.', (done) => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(() => {
+					throw 'error'
+				})
+				.afterFinishedDoWithCallback((e, v, resolve, reject) => {
+					expect(e).toBe('error', 'Should receive the error.')
+					expect(v).toBe(42, 'Should receive the value.')
+					resolve(111)
+				})
+				.onFinished((e, v) => {
+					expect(e).toBeUndefined('Should not receive an error.')
+					expect(v).toBe(111, 'Should receive the value from afterFinishedDoWithCallback.')
+					done()
+				}, { atEnd: true })
+				.start()
+
+			expect(q.getValue()).toBe(42, 'Should receive the original value.')
 		})
 	})
 })

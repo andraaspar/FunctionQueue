@@ -23,7 +23,7 @@
 		"typescript": "^2.4.1"
 	},
 	"scripts": {
-		"compile": "rimraf *.js *.d.ts && tsc && yarn run test",
+		"compile": "rimraf *.js *.d.ts ./coverage && tsc && yarn run test",
 		"test": "istanbul cover node_modules/jasmine/bin/jasmine.js",
 		"openCoverage": "opn ./coverage/lcov-report/index.html"
 	}
