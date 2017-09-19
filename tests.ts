@@ -113,6 +113,90 @@ describe('FunctionQueue', () => {
 
 			expect(q.getValue()).toBe(333, 'The value from 3rd onValue should be received.')
 		})
+		it('Skips onValue when there’s an error.', () => {
+
+			let onValue1 = jasmine.createSpy('onValue')
+			let onValue2 = jasmine.createSpy('onValue')
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error'
+				})
+				.onValue(onValue1)
+				.onValue(onValue2)
+				.start()
+
+			expect(q.getError()).toBe('error', 'The error should be received.')
+			expect(q.getValue()).toBe(42, 'The original value should be received.')
+			expect(onValue1).not.toHaveBeenCalled()
+			expect(onValue2).not.toHaveBeenCalled()
+		})
+	})
+	describe('onError', () => {
+		it('Will not be called if there’s no error.', () => {
+
+			let onError = jasmine.createSpy('onError')
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onError(onError)
+				.start()
+
+			expect(onError).not.toHaveBeenCalled()
+		})
+		it('Will be called if there’s an error.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error'
+				})
+				.onError((e, v) => {
+					expect(e).toBe('error', 'Should receive the error.')
+					expect(v).toBe(42, 'Should receive the value.')
+					return 111
+				})
+				.start()
+
+			expect(q.getValue()).toBe(111, 'Should receive the value from onError.')
+		})
+	})
+	describe('onErrorOrValue', () => {
+		it('Receives values.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onErrorOrValue((e, v) => {
+					expect(e).toBeUndefined('No error should be received.')
+					expect(v).toBe(42, 'Value should be received.')
+					return 111
+				})
+				.start()
+
+			expect(q.getValue()).toBe(111, 'The value from onErrorOrValue should be received.')
+		})
+		it('Catches errors.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					throw 'error'
+				})
+				.onErrorOrValue((e, v) => {
+					expect(e).toBe('error', 'Error should be received.')
+					expect(v).toBe(42, 'Value should be received.')
+					return 111
+				})
+				.start()
+
+			expect(q.getValue()).toBe(111, 'The value from onErrorOrValue should be received.')
+		})
 	})
 	describe('onFinished', () => {
 		it('Supports onFinished.', () => {
@@ -142,7 +226,7 @@ describe('FunctionQueue', () => {
 
 			expect(q.getValue()).toBe(42, 'The original value should be received.')
 		})
-		it('Can splice onValues before onFinished.', () => {
+		it('Can splice functions before onFinished.', () => {
 
 			let q = new FunctionQueue({
 				value: 42,
@@ -154,14 +238,16 @@ describe('FunctionQueue', () => {
 				})
 				.onValue(v => {
 					expect(v).toBe(42, 'Value should be received.')
-					return 111
+					throw 'error 1'
 				})
-				.onValue(v => {
-					expect(v).toBe(111, 'Value from 1st onValue should be received.')
-					return 222
+				.onErrorOrValue((e, v) => {
+					expect(e).toBe('error 1', 'The error from onValue should be received.')
+					expect(v).toBe(42, 'Value from 1st onValue should be received.')
+					throw 'error 2'
 				})
-				.onValue(v => {
-					expect(v).toBe(222, 'Value from 2nd onValue should be received.')
+				.onError((e, v) => {
+					expect(e).toBe('error 2', 'The error from onErrorOrValue should be received.')
+					expect(v).toBe(42, 'Value from 2nd onValue should be received.')
 					return 333
 				})
 				.start()
