@@ -179,6 +179,20 @@ describe('FunctionQueue', () => {
 			expect(q.getError()).toBe('error', 'Should receive the error.')
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
 		})
+		it('May reject with no error.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValueDoWithCallback((v, resolve, reject) => {
+					expect(v).toBe(42, 'Should receive the value.')
+					reject()
+				})
+				.start()
+
+			expect(q.getError()).toEqual(new Error(), 'Should receive an error.')
+			expect(q.getValue()).toBe(42, 'Should receive the original value.')
+		})
 	})
 	describe('onError', () => {
 		it('Will not be called if there’s no error.', () => {
