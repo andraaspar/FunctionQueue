@@ -97,7 +97,7 @@ new FunQ({value: 42})
     .start()
 ```
 
-Check the [unit tests](./blob/master/tests.ts) for more examples.
+Check the [unit tests](https://github.com/andraaspar/fun-q/blob/master/tests.ts) for more examples.
 
 ## License
 
