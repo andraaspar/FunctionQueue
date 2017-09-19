@@ -134,6 +134,52 @@ describe('FunctionQueue', () => {
 			expect(onValue2).not.toHaveBeenCalled()
 		})
 	})
+	describe('onValueDoWithCallback', () => {
+		it('May resolve immediately.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValueDoWithCallback((v, resolve) => {
+					expect(v).toBe(42, 'Should receive the value.')
+					resolve(111)
+				})
+				.start()
+
+			expect(q.getError()).toBeUndefined('Should not receive an error.')
+			expect(q.getValue()).toBe(111, 'Should receive the value from onValueDoWithCallback.')
+		})
+		it('May not reject after it resolved.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValueDoWithCallback((v, resolve, reject) => {
+					expect(v).toBe(42, 'Should receive the value.')
+					resolve(111)
+					reject('error')
+				})
+				.start()
+
+			expect(q.getError()).toBeUndefined('Should not receive an error.')
+			expect(q.getValue()).toBe(111, 'Should receive the value from onValueDoWithCallback.')
+		})
+		it('May not resolve after it’s been rejected.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValueDoWithCallback((v, resolve, reject) => {
+					expect(v).toBe(42, 'Should receive the value.')
+					reject('error')
+					resolve(111)
+				})
+				.start()
+
+			expect(q.getError()).toBe('error', 'Should receive the error.')
+			expect(q.getValue()).toBe(42, 'Should receive the original value.')
+		})
+	})
 	describe('onError', () => {
 		it('Will not be called if there’s no error.', () => {
 

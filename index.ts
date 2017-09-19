@@ -59,6 +59,7 @@ export class FunctionQueue<T = any> {
 	private _isStarted = false
 	private _isFinalized = false
 	private _errorWarningRef: any
+	private _item: FunctionQueueItem | undefined
 
 	constructor(o: {
 		name?: string,
@@ -204,6 +205,7 @@ export class FunctionQueue<T = any> {
 	}
 	protected execFunction(item: FunctionQueueItem) {
 		this.log('execFunction item:', item)
+		this._item = item
 		this._isAwaitingCallback = false
 		try {
 			let hasError = typeof this._error !== 'undefined'
@@ -212,10 +214,10 @@ export class FunctionQueue<T = any> {
 					this._isAwaitingCallback = true
 					if (item.defer) {
 						setTimeout(() => {
-							item.f(this._value, v => this.resolve(v), (e, v) => this.reject(e, v))
+							item.f(this._value, this.getResolveForItem(item), this.getRejectForItem(item))
 						}, 0)
 					} else {
-						item.f(this._value, v => this.resolve(v), (e, v) => this.reject(e, v))
+						item.f(this._value, this.getResolveForItem(item), this.getRejectForItem(item))
 					}
 				}
 			} else if (item instanceof FunctionQueueItemOnResolveSync) {
@@ -243,10 +245,10 @@ export class FunctionQueue<T = any> {
 					this._isAwaitingCallback = true
 					if (item.defer) {
 						setTimeout(() => {
-							item.f(e, this._value, v => this.resolve(v), (e, v) => this.reject(e, v))
+							item.f(e, this._value, this.getResolveForItem(item), this.getRejectForItem(item))
 						}, 0)
 					} else {
-						item.f(e, this._value, v => this.resolve(v), (e, v) => this.reject(e, v))
+						item.f(e, this._value, this.getResolveForItem(item), this.getRejectForItem(item))
 					}
 				}
 			} else if (item instanceof FunctionQueueItemOnRejectSync) {
@@ -274,7 +276,6 @@ export class FunctionQueue<T = any> {
 			}
 		} catch (e) {
 			this.reject(e, this._value)
-			return
 		}
 	}
 	protected resolve(value?: T) {
@@ -284,13 +285,28 @@ export class FunctionQueue<T = any> {
 	}
 	protected reject(e?: any, value?: T) {
 		this.log('reject e:', e)
-		this._error = e
+		this._error = e || new Error()
 		this.setValueIfDefined(value)
 		this.afterResolve()
 	}
 	protected afterResolve() {
 		this._isAwaitingCallback = false
+		this._item = undefined
 		this.process()
+	}
+	protected getResolveForItem(item: FunctionQueueItem): TFunctionQueueResolve<T> {
+		return v => {
+			if (this._item === item) {
+				this.resolve(v)
+			}
+		}
+	}
+	protected getRejectForItem(item: FunctionQueueItem): TFunctionQueueReject<T> {
+		return (e, v) => {
+			if (this._item === item) {
+				this.reject(e, v)
+			}
+		}
 	}
 	getError() {
 		clearTimeout(this._errorWarningRef)
