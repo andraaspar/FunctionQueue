@@ -50,7 +50,7 @@ export class FunctionQueueItemOnRejectSync<T> extends FunctionQueueItemOnReject 
 
 export class FunctionQueue<T = any> {
 
-	private _name?: string
+	// private _name?: string
 	private _value: T
 	private _error: any
 	private _items: FunctionQueueItem[] = []
@@ -62,11 +62,11 @@ export class FunctionQueue<T = any> {
 	private _item: FunctionQueueItem | undefined
 
 	constructor(o: {
-		name?: string,
+		// name?: string,
 		value: T,
 	}) {
-		this.log('constructor', o)
-		this._name = o.name
+		// this.log('constructor', o)
+		// this._name = o.name
 		this._value = o.value
 	}
 	onValueDoWithCallback(f: TFunctionQueueOnResolveAsync<T>, o: { defer?: boolean } = {}) {
@@ -156,7 +156,7 @@ export class FunctionQueue<T = any> {
 		return this.onFinished(f, { defer: true, ...o })
 	}
 	start() {
-		this.log('start isStarted:', this._isStarted)
+		// this.log('start isStarted:', this._isStarted)
 		if (!this._isStarted) {
 			this._isStarted = true
 			this.process()
@@ -175,14 +175,14 @@ export class FunctionQueue<T = any> {
 				}
 			}
 		}
-		this.log('add index:', index, 'item:', item)
+		// this.log('add index:', index, 'item:', item)
 		this._items.splice(index, 0, item)
 		if (this._isStarted && !this.isProcessing()) {
 			this.process()
 		}
 	}
 	protected process() {
-		this.log('process isInProcessLoop:', this._isInProcessLoop, 'isAwaitingCallback:', this._isAwaitingCallback)
+		// this.log('process isInProcessLoop:', this._isInProcessLoop, 'isAwaitingCallback:', this._isAwaitingCallback)
 		if (!this.isProcessing()) {
 			clearTimeout(this._errorWarningRef)
 			this._isInProcessLoop = true
@@ -204,7 +204,7 @@ export class FunctionQueue<T = any> {
 		return this._isInProcessLoop || this._isAwaitingCallback
 	}
 	protected execFunction(item: FunctionQueueItem) {
-		this.log('execFunction item:', item)
+		// this.log('execFunction item:', item)
 		this._item = item
 		this._isAwaitingCallback = false
 		try {
@@ -287,12 +287,12 @@ export class FunctionQueue<T = any> {
 		}
 	}
 	protected resolve(value?: T) {
-		this.log('resolve value:', value)
+		// this.log('resolve value:', value)
 		this.setValueIfDefined(value)
 		this.afterResolve()
 	}
 	protected reject(e?: any, value?: T) {
-		this.log('reject e:', e)
+		// this.log('reject e:', e)
 		this._error = e || new Error()
 		this.setValueIfDefined(value)
 		this.afterResolve()
@@ -334,9 +334,9 @@ export class FunctionQueue<T = any> {
 			this._value = value
 		}
 	}
-	protected log(...rest: any[]) {
-		if (this._name) {
-			console.log(this._name + ':', ...rest)
-		}
-	}
+	// protected log(...rest: any[]) {
+	// 	if (this._name) {
+	// 		console.log(this._name + ':', ...rest)
+	// 	}
+	// }
 }
