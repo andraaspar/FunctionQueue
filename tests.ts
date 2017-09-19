@@ -78,7 +78,7 @@ describe('FunctionQueue', () => {
 
 			expect(q.getValue()).toBe(42)
 		})
-		it('May set delay: 0 to postpone execution till after the current function.', (done) => {
+		it('May set defer to postpone execution till after the current function.', (done) => {
 
 			let q = new FunctionQueue({
 				value: 42,
@@ -87,10 +87,31 @@ describe('FunctionQueue', () => {
 					expect(v).toBe(42)
 					done()
 					return 111
-				}, { delay: 0 })
+				}, { defer: true })
 				.start()
 
 			expect(q.getValue()).toBe(42)
+		})
+		it('Stacks onValue calls.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onValue(v => {
+					expect(v).toBe(42, 'The original value should be received.')
+					return 111
+				})
+				.onValue(v => {
+					expect(v).toBe(111, 'The value from 1st onValue should be received.')
+					return 222
+				})
+				.onValue(v => {
+					expect(v).toBe(222, 'The value from 2nd onValue should be received.')
+					return 333
+				})
+				.start()
+
+			expect(q.getValue()).toBe(333, 'The value from 3rd onValue should be received.')
 		})
 	})
 	describe('onFinished', () => {
@@ -229,6 +250,27 @@ describe('FunctionQueue', () => {
 
 			expect(q.getValue()).toBe(42, 'The original value should be received.')
 			expect(afterFinished).not.toHaveBeenCalled()
+		})
+		it('Can’t prepend onFinished after finalized.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onFinished(() => { })
+				.start()
+
+			expect(() => q.onFinished(() => { })).toThrowError(/finalized/)
+		})
+		it('Can append onFinished after finalized.', () => {
+
+			let q = new FunctionQueue({
+				value: 42,
+			})
+				.onFinished(() => 111)
+				.start()
+
+			expect(() => q.onFinished(() => 222, { atEnd: true })).not.toThrow()
+			expect(q.getValue()).toBe(222, 'The value from the appended onFinished should be received.')
 		})
 	})
 })
