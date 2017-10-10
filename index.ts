@@ -1,7 +1,7 @@
 export type TFunQResolve<T> = () => void
 export type TFunQReject<T> = (e?: any) => void
-export type TFunQOnResolveAsync<T> = (v: T, resolve: TFunQResolve<T>, reject: TFunQReject<T>) => void
-export type TFunQOnRejectAsync<T> = (e: any, v: T, resolve: TFunQResolve<T>, reject: TFunQReject<T>) => void
+export type TFunQOnResolveAsync<T> = (q: IFunQGuts<T>) => void
+export type TFunQOnRejectAsync<T> = (e: any, q: IFunQGuts<T>) => void
 
 export class FunQItem {
 	handlesBoth: boolean
@@ -26,6 +26,12 @@ export class FunQItemOnReject<T> extends FunQItem {
 		super({ defer: o.defer, isFinal: o.isFinal, handlesBoth: o.handlesBoth })
 		this.f = o.f
 	}
+}
+
+export interface IFunQGuts<T> {
+	value: T
+	resolve: TFunQResolve<T>
+	reject: TFunQReject<T>
 }
 
 export class FunQ<T extends object = {}> {
@@ -102,34 +108,38 @@ export class FunQ<T extends object = {}> {
 		return this.onFinished(f, { defer: true, ...o })
 	}
 	onSuccessResolveAll(fs: TFunQOnResolveAsync<T>[], o: { defer?: boolean } = {}) {
-		return this.onSuccess((v, resolve, reject) => {
+		return this.onSuccess((q) => {
 			let count = fs.length
 			let errors: any[] = []
 			let rejectF: TFunQReject<T> = (e) => {
 				errors.push(e)
 				if (--count <= 0) {
-					reject(errors)
+					q.reject(errors)
 				}
 			}
 			let resolveF: TFunQResolve<T> = () => {
 				if (--count <= 0) {
 					if (errors.length) {
-						reject(errors)
+						q.reject(errors)
 					} else {
-						resolve()
+						q.resolve()
 					}
 				}
 			}
 			if (fs && fs.length) {
 				for (let f of fs) {
 					try {
-						f(v, resolveF, rejectF)
+						f({
+							value: q.value,
+							resolve: resolveF,
+							reject: rejectF,
+						})
 					} catch (e) {
 						rejectF(e)
 					}
 				}
 			} else {
-				resolve()
+				q.resolve()
 			}
 		}, o)
 	}
@@ -192,11 +202,11 @@ export class FunQ<T extends object = {}> {
 					if (!this._hasWaitedForFinalize) {
 						this.add(new FunQItemOnReject<T>({
 							defer: true,
-							f: (e, v, resolve, reject) => {
+							f: (e, q) => {
 								// this.log(`_hasWaitedForFinalize e:`, e, `v:`, v)
 								this._hasWaitedForFinalize = true
-								if (e) reject(e)
-								else resolve()
+								if (e) q.reject(e)
+								else q.resolve()
 							},
 							handlesBoth: true,
 							isFinal: false,
@@ -220,13 +230,13 @@ export class FunQ<T extends object = {}> {
 					if (item.defer) {
 						setTimeout(() => {
 							try {
-								item.f(this._value, this.getResolveForItem(item), this.getRejectForItem(item))
+								item.f(this.getGutsForItem(item))
 							} catch (e) {
 								this.reject(e)
 							}
 						}, 0)
 					} else {
-						item.f(this._value, this.getResolveForItem(item), this.getRejectForItem(item))
+						item.f(this.getGutsForItem(item))
 					}
 				}
 			} else if (item instanceof FunQItemOnReject) {
@@ -240,13 +250,13 @@ export class FunQ<T extends object = {}> {
 					if (item.defer) {
 						setTimeout(() => {
 							try {
-								item.f(e, this._value, this.getResolveForItem(item), this.getRejectForItem(item))
+								item.f(e, this.getGutsForItem(item))
 							} catch (e) {
 								this.reject(e)
 							}
 						}, 0)
 					} else {
-						item.f(e, this._value, this.getResolveForItem(item), this.getRejectForItem(item))
+						item.f(e, this.getGutsForItem(item))
 					}
 				}
 			} else {
@@ -270,18 +280,19 @@ export class FunQ<T extends object = {}> {
 		this._item = undefined
 		this.process()
 	}
-	protected getResolveForItem(item: FunQItem): TFunQResolve<T> {
-		return () => {
-			if (this._item === item) {
-				this.resolve()
-			}
-		}
-	}
-	protected getRejectForItem(item: FunQItem): TFunQReject<T> {
-		return (e) => {
-			if (this._item === item) {
-				this.reject(e)
-			}
+	protected getGutsForItem(item: FunQItem): IFunQGuts<T> {
+		return {
+			value: this._value,
+			resolve: () => {
+				if (this._item === item) {
+					this.resolve()
+				}
+			},
+			reject: (e) => {
+				if (this._item === item) {
+					this.reject(e)
+				}
+			},
 		}
 	}
 	getError() {

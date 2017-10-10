@@ -1,4 +1,4 @@
-import { FunQ, TFunQResolve } from './index'
+import { FunQ, IFunQGuts, TFunQResolve } from './index'
 
 describe('FunQ', () => {
 	describe('instance', () => {
@@ -43,10 +43,10 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onSuccess((v, resolve) => {
-					expect(v).toEqual({ n: 42 }, 'Value should be received in onSuccess.')
-					v.n = 111
-					resolve()
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received in onSuccess.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'The value from onSuccess should be received.')
@@ -56,9 +56,9 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onSuccess((v, resolve) => {
-					expect(v).toEqual({ n: 42 }, 'Value should be received in onSuccess.')
-					resolve()
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received in onSuccess.')
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 42 }, 'The original value should be received.')
@@ -71,11 +71,11 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error'
 				})
-				.onError((e, v, resolve) => {
+				.onError((e, q) => {
 					expect(e).toBe('error', 'The error should be received.')
-					expect(v).toEqual({ n: 42 }, 'The value should be received.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'The value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'The value from onError should be received.')
@@ -85,10 +85,10 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onSuccess((v, resolve) => {
-					expect(v).toEqual({ n: 42 })
-					v.n = 111
-					resolve()
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 })
+					q.value.n = 111
+					q.resolve()
 					done()
 				}, { defer: true })
 
@@ -99,20 +99,20 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onSuccess((v, resolve) => {
-					expect(v).toEqual({ n: 42 }, 'The original value should be received.')
-					v.n = 111
-					resolve()
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 }, 'The original value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
-				.onSuccess((v, resolve) => {
-					expect(v).toEqual({ n: 111 }, 'The value from 1st onSuccess should be received.')
-					v.n = 222
-					resolve()
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 111 }, 'The value from 1st onSuccess should be received.')
+					q.value.n = 222
+					q.resolve()
 				})
-				.onSuccess((v, resolve) => {
-					expect(v).toEqual({ n: 222 }, 'The value from 2nd onSuccess should be received.')
-					v.n = 333
-					resolve()
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 222 }, 'The value from 2nd onSuccess should be received.')
+					q.value.n = 333
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 333 }, 'The value from 3rd onSuccess should be received.')
@@ -154,10 +154,10 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onSuccess((v, resolve) => {
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getError()).toBeUndefined('Should not receive an error.')
@@ -168,11 +168,11 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onSuccess((v, resolve, reject) => {
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
-					reject('error')
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
+					q.reject('error')
 				})
 
 			expect(q.getError()).toBeUndefined('Should not receive an error.')
@@ -183,10 +183,10 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onSuccess((v, resolve, reject) => {
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					reject('error')
-					resolve()
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.reject('error')
+					q.resolve()
 				})
 
 			expect(q.getError()).toBe('error', 'Should receive the error.')
@@ -197,9 +197,9 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onSuccess((v, resolve, reject) => {
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					reject()
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.reject()
 				})
 
 			expect(q.getError()).toEqual(new Error(), 'Should receive an error.')
@@ -210,7 +210,7 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onSuccess((v, resolve, reject) => {
+				.onSuccess((q) => {
 					throw 'error'
 				})
 
@@ -224,14 +224,14 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.afterSuccess((v, resolve) => {
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
+				.afterSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('Should not receive an error.')
-					expect(v).toEqual({ n: 111 }, 'Should receive the value from afterSuccess.')
+					expect(q.value).toEqual({ n: 111 }, 'Should receive the value from afterSuccess.')
 					done()
 				})
 
@@ -245,9 +245,9 @@ describe('FunQ', () => {
 				.afterSuccess(v => {
 					throw 'error'
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBe('error', 'Should receive the error from afterSuccess.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the original value.')
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the original value.')
 					done()
 				})
 		})
@@ -256,14 +256,14 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.afterSuccess((v, resolve, reject) => {
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
+				.afterSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('Should not receive an error.')
-					expect(v).toEqual({ n: 111 }, 'Should receive the value from afterSuccess.')
+					expect(q.value).toEqual({ n: 111 }, 'Should receive the value from afterSuccess.')
 					done()
 				})
 
@@ -274,12 +274,12 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.afterSuccess((v, resolve, reject) => {
-					reject('error')
+				.afterSuccess((q) => {
+					q.reject('error')
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBe('error', 'Should receive the error from afterSuccess.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the original value.')
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the original value.')
 					done()
 				})
 		})
@@ -288,12 +288,12 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.afterSuccess((v, resolve, reject) => {
+				.afterSuccess((q) => {
 					throw 'error'
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBe('error', 'Should receive the error from afterSuccess.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the original value.')
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the original value.')
 					done()
 				})
 		})
@@ -318,11 +318,11 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error'
 				})
-				.onError((e, v, resolve) => {
+				.onError((e, q) => {
 					expect(e).toBe('error', 'Should receive the error.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'Should receive the value from onError.')
@@ -346,11 +346,11 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error'
 				})
-				.onError((e, v, resolve, reject) => {
+				.onError((e, q) => {
 					expect(e).toBe('error', 'Should receive the error.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'Should receive the value from onError.')
@@ -363,12 +363,12 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error 1'
 				})
-				.onError((e, v, resolve, reject) => {
-					reject('error 2')
+				.onError((e, q) => {
+					q.reject('error 2')
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBe('error 2', 'Should receive the error from onError.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the original value.')
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the original value.')
 					done()
 				})
 		})
@@ -380,12 +380,12 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error 1'
 				})
-				.onError((v, resolve, reject) => {
+				.onError((q) => {
 					throw 'error 2'
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBe('error 2', 'Should receive the error from onError.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the original value.')
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the original value.')
 					done()
 				})
 		})
@@ -399,15 +399,15 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error'
 				})
-				.afterError((e, v, resolve) => {
+				.afterError((e, q) => {
 					expect(e).toBe('error', 'Should receive the error.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('Should not receive an error.')
-					expect(v).toEqual({ n: 111 }, 'Should receive the value from afterSuccess.')
+					expect(q.value).toEqual({ n: 111 }, 'Should receive the value from afterSuccess.')
 					done()
 				})
 
@@ -421,12 +421,12 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error 1'
 				})
-				.afterError((e, v) => {
+				.afterError((e, q) => {
 					throw 'error 2'
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBe('error 2', 'Should receive the error from afterError.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the original value.')
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the original value.')
 					done()
 				})
 		})
@@ -438,15 +438,15 @@ describe('FunQ', () => {
 				.onSuccess(() => {
 					throw 'error'
 				})
-				.afterError((e, v, resolve, reject) => {
+				.afterError((e, q) => {
 					expect(e).toBe('error', 'Should receive the error.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('Should not receive an error.')
-					expect(v).toEqual({ n: 111 }, 'Should receive the value from afterError.')
+					expect(q.value).toEqual({ n: 111 }, 'Should receive the value from afterError.')
 					done()
 				})
 
@@ -460,12 +460,12 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error 1'
 				})
-				.afterError((e, v, resolve, reject) => {
+				.afterError((e, q) => {
 					throw 'error 2'
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBe('error 2', 'Should receive the error from afterError.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the original value.')
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the original value.')
 					done()
 				})
 		})
@@ -476,11 +476,11 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onDone((e, v, resolve) => {
+				.onDone((e, q) => {
 					expect(e).toBeUndefined('No error should be received.')
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'The value from onDone should be received.')
@@ -493,11 +493,11 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error'
 				})
-				.onDone((e, v, resolve) => {
+				.onDone((e, q) => {
 					expect(e).toBe('error', 'Error should be received.')
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'The value from onDone should be received.')
@@ -507,11 +507,11 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onDone((e, v, resolve, reject) => {
+				.onDone((e, q) => {
 					expect(e).toBeUndefined('No error should be received.')
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'The value from onDone should be received.')
@@ -524,11 +524,11 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error'
 				})
-				.onDone((e, v, resolve, reject) => {
+				.onDone((e, q) => {
 					expect(e).toBe('error', 'Error should be received.')
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'The value from onDone should be received.')
@@ -543,15 +543,15 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error'
 				})
-				.afterDone((e, v, resolve) => {
+				.afterDone((e, q) => {
 					expect(e).toBe('error', 'Should receive the error.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('Should not receive an error.')
-					expect(v).toEqual({ n: 111 }, 'Should receive the value from afterDone.')
+					expect(q.value).toEqual({ n: 111 }, 'Should receive the value from afterDone.')
 					done()
 				})
 
@@ -565,15 +565,15 @@ describe('FunQ', () => {
 				.onSuccess(() => {
 					throw 'error'
 				})
-				.afterDone((e, v, resolve, reject) => {
+				.afterDone((e, q) => {
 					expect(e).toBe('error', 'Should receive the error.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('Should not receive an error.')
-					expect(v).toEqual({ n: 111 }, 'Should receive the value from afterDone .')
+					expect(q.value).toEqual({ n: 111 }, 'Should receive the value from afterDone .')
 					done()
 				})
 
@@ -587,11 +587,11 @@ describe('FunQ', () => {
 				value: { n: 42 },
 				dontDelayFinalize: true,
 			})
-				.onFinished((e, v, resolve) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('No error should occur.')
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'The value from onFinished should be received.')
@@ -602,9 +602,9 @@ describe('FunQ', () => {
 				value: { n: 42 },
 				dontDelayFinalize: true,
 			})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('No error should occur.')
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
 				})
 
 			expect(q.getValue()).toEqual({ n: 42 }, 'The original value should be received.')
@@ -616,26 +616,26 @@ describe('FunQ', () => {
 				dontStart: true,
 				dontDelayFinalize: true,
 			})
-				.onFinished((e, v, resolve) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('No error should occur.')
-					expect(v).toEqual({ n: 333 }, 'Value from 3rd onSuccess should be received.')
-					v.n = 444
-					resolve()
+					expect(q.value).toEqual({ n: 333 }, 'Value from 3rd onSuccess should be received.')
+					q.value.n = 444
+					q.resolve()
 				})
-				.onSuccess(v => {
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
+				.onSuccess(q => {
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
 					throw 'error 1'
 				})
-				.onDone((e, v) => {
+				.onDone((e, q) => {
 					expect(e).toBe('error 1', 'The error from onSuccess should be received.')
-					expect(v).toEqual({ n: 42 }, 'Value from 1st onSuccess should be received.')
+					expect(q.value).toEqual({ n: 42 }, 'Value from 1st onSuccess should be received.')
 					throw 'error 2'
 				})
-				.onError((e, v, resolve) => {
+				.onError((e, q) => {
 					expect(e).toBe('error 2', 'The error from onDone should be received.')
-					expect(v).toEqual({ n: 42 }, 'Value from 2nd onSuccess should be received.')
-					v.n = 333
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Value from 2nd onSuccess should be received.')
+					q.value.n = 333
+					q.resolve()
 				})
 				.start()
 
@@ -648,23 +648,23 @@ describe('FunQ', () => {
 				dontStart: true,
 				dontDelayFinalize: true,
 			})
-				.onFinished((e, v, resolve) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('No error should occur 3.')
-					expect(v).toEqual({ n: 222 }, 'Value from 2nd onFinished should be received.')
-					v.n = 333
-					resolve()
+					expect(q.value).toEqual({ n: 222 }, 'Value from 2nd onFinished should be received.')
+					q.value.n = 333
+					q.resolve()
 				})
-				.onFinished((e, v, resolve) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('No error should occur 2.')
-					expect(v).toEqual({ n: 111 }, 'Value from 1st onFinished should be received.')
-					v.n = 222
-					resolve()
+					expect(q.value).toEqual({ n: 111 }, 'Value from 1st onFinished should be received.')
+					q.value.n = 222
+					q.resolve()
 				})
-				.onFinished((e, v, resolve) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('No error should occur 1.')
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
 				.start()
 
@@ -676,23 +676,23 @@ describe('FunQ', () => {
 				dontStart: true,
 				dontDelayFinalize: true,
 			})
-				.onFinished((e, v, resolve) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('No error should occur 1.')
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
+					q.value.n = 111
+					q.resolve()
 				}, { atEnd: true })
-				.onFinished((e, v, resolve) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('No error should occur 2.')
-					expect(v).toEqual({ n: 111 }, 'Value from 1st onFinished should be received.')
-					v.n = 222
-					resolve()
+					expect(q.value).toEqual({ n: 111 }, 'Value from 1st onFinished should be received.')
+					q.value.n = 222
+					q.resolve()
 				}, { atEnd: true })
-				.onFinished((e, v, resolve) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('No error should occur 3.')
-					expect(v).toEqual({ n: 222 }, 'Value from 2nd onFinished should be received.')
-					v.n = 333
-					resolve()
+					expect(q.value).toEqual({ n: 222 }, 'Value from 2nd onFinished should be received.')
+					q.value.n = 333
+					q.resolve()
 				}, { atEnd: true })
 				.start()
 
@@ -714,14 +714,14 @@ describe('FunQ', () => {
 				value: { n: 42 },
 				dontDelayFinalize: true,
 			})
-				.onFinished((e, v, resolve) => {
-					v.n = 111
-					resolve()
+				.onFinished((e, q) => {
+					q.value.n = 111
+					q.resolve()
 				})
 
-			expect(() => q.onFinished((e, v, resolve) => {
-				v.n = 222
-				resolve()
+			expect(() => q.onFinished((e, q) => {
+				q.value.n = 222
+				q.resolve()
 			}, { atEnd: true })).not.toThrow()
 			expect(q.getValue()).toEqual({ n: 222 }, 'The value from the appended onFinished should be received.')
 		})
@@ -730,23 +730,23 @@ describe('FunQ', () => {
 			let q = new FunQ({
 				value: { n: 42 },
 			})
-				.onFinished((e, v, resolve) => {
-					expect(v).toEqual({ n: 222 }, 'The value from onSuccess should be received.')
-					v.n = 333
-					resolve()
+				.onFinished((e, q) => {
+					expect(q.value).toEqual({ n: 222 }, 'The value from onSuccess should be received.')
+					q.value.n = 333
+					q.resolve()
 				})
-				.onSuccess((v, resolve) => {
-					expect(v).toEqual({ n: 42 }, 'The original value should be received.')
-					v.n = 111
-					resolve()
+				.onSuccess((q) => {
+					expect(q.value).toEqual({ n: 42 }, 'The original value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
-				.onFinished((e, v, resolve) => {
-					expect(v).toEqual({ n: 111 }, 'The value from onSuccess should be received.')
-					v.n = 222
-					resolve()
+				.onFinished((e, q) => {
+					expect(q.value).toEqual({ n: 111 }, 'The value from onSuccess should be received.')
+					q.value.n = 222
+					q.resolve()
 				})
-				.onFinished((e, v) => {
-					expect(v).toEqual({ n: 333 }, 'The value from the first onFinished should be received.')
+				.onFinished((e, q) => {
+					expect(q.value).toEqual({ n: 333 }, 'The value from the first onFinished should be received.')
 					done()
 				}, { atEnd: true })
 		})
@@ -756,11 +756,11 @@ describe('FunQ', () => {
 				value: { n: 42 },
 				dontDelayFinalize: true,
 			})
-				.onFinished((e, v, resolve, reject) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('No error should be received.')
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'The value from onFinished should be received.')
@@ -774,11 +774,11 @@ describe('FunQ', () => {
 				.onSuccess(v => {
 					throw 'error'
 				})
-				.onFinished((e, v, resolve, reject) => {
+				.onFinished((e, q) => {
 					expect(e).toBe('error', 'Error should be received.')
-					expect(v).toEqual({ n: 42 }, 'Value should be received.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
+					q.value.n = 111
+					q.resolve()
 				})
 
 			expect(q.getValue()).toEqual({ n: 111 }, 'The value from onFinished should be received.')
@@ -787,12 +787,12 @@ describe('FunQ', () => {
 	describe('afterFinished', () => {
 		it('Runs after current function.', (done) => {
 
-			let afterFinished = jasmine.createSpy('afterFinished', (e: any, v: { n: number }, resolve: TFunQResolve<number>) => {
+			let afterFinished = jasmine.createSpy('afterFinished', (e: any, q: IFunQGuts<{n: number}>) => {
 				expect(e).toBeUndefined('No error should occur 1.')
-				expect(v).toEqual({ n: 42 }, 'Value should be received.')
+				expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
 				done()
-				v.n = 111
-				resolve()
+				q.value.n = 111
+				q.resolve()
 			}).and.callThrough()
 
 			let q = new FunQ({
@@ -806,12 +806,12 @@ describe('FunQ', () => {
 		})
 		it('Works if added after start.', (done) => {
 
-			let afterFinished = jasmine.createSpy('afterFinished', (e: any, v: { n: number }, resolve: TFunQResolve<number>) => {
+			let afterFinished = jasmine.createSpy('afterFinished', (e: any, q: IFunQGuts<{n: number}>) => {
 				expect(e).toBeUndefined('No error should occur 1.')
-				expect(v).toEqual({ n: 42 }, 'Value should be received.')
+				expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
 				done()
-				v.n = 111
-				resolve()
+				q.value.n = 111
+				q.resolve()
 			}).and.callThrough()
 
 			let q = new FunQ({
@@ -834,15 +834,15 @@ describe('FunQ', () => {
 				.onSuccess(() => {
 					throw 'error'
 				})
-				.afterFinished((e, v, resolve, reject) => {
+				.afterFinished((e, q) => {
 					expect(e).toBe('error', 'Should receive the error.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
-					v.n = 111
-					resolve()
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
+					q.value.n = 111
+					q.resolve()
 				})
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('Should not receive an error.')
-					expect(v).toEqual({ n: 111 }, 'Should receive the value from afterFinished.')
+					expect(q.value).toEqual({ n: 111 }, 'Should receive the value from afterFinished.')
 					done()
 				}, { atEnd: true })
 
@@ -853,31 +853,31 @@ describe('FunQ', () => {
 		it('Works with an empty array.', (done) => {
 			new FunQ({ value: { n: 42 } })
 				.onSuccessResolveAll([])
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('Should not receive an error.')
-					expect(v).toEqual({ n: 42 }, 'Should receive the value.')
+					expect(q.value).toEqual({ n: 42 }, 'Should receive the value.')
 					done()
 				})
 		})
 		it('Calls all functions.', (done) => {
 			new FunQ({ value: { a: false, b: false, c: false } })
 				.onSuccessResolveAll([
-					(v, resolve) => {
-						v.a = true
-						resolve()
+					(q) => {
+						q.value.a = true
+						q.resolve()
 					},
-					(v, resolve) => {
-						v.b = true
-						resolve()
+					(q) => {
+						q.value.b = true
+						q.resolve()
 					},
-					(v, resolve) => {
-						v.c = true
-						resolve()
+					(q) => {
+						q.value.c = true
+						q.resolve()
 					},
 				])
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toBeUndefined('Should not receive an error.')
-					expect(v).toEqual({ a: true, b: true, c: true }, 'Should receive the value.')
+					expect(q.value).toEqual({ a: true, b: true, c: true }, 'Should receive the value.')
 					done()
 				})
 		})
@@ -894,7 +894,7 @@ describe('FunQ', () => {
 						throw 'c'
 					},
 				])
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toContain('a')
 					expect(e).toContain('b')
 					expect(e).toContain('c')
@@ -904,17 +904,17 @@ describe('FunQ', () => {
 		it('Collects all rejected errors.', (done) => {
 			new FunQ()
 				.onSuccessResolveAll([
-					(v, resolve, reject) => {
-						reject('a')
+					(q) => {
+						q.reject('a')
 					},
-					(v, resolve, reject) => {
-						reject('b')
+					(q) => {
+						q.reject('b')
 					},
-					(v, resolve, reject) => {
-						reject('c')
+					(q) => {
+						q.reject('c')
 					},
 				])
-				.onFinished((e, v) => {
+				.onFinished((e, q) => {
 					expect(e).toContain('a')
 					expect(e).toContain('b')
 					expect(e).toContain('c')
@@ -924,17 +924,17 @@ describe('FunQ', () => {
 		it('Rejects when an error was thrown in any function.', (done) => {
 			new FunQ({ value: { a: false, b: false } })
 				.onSuccessResolveAll([
-					(v, resolve, reject) => {
-						reject('error')
+					(q) => {
+						q.reject('error')
 					},
-					(v, resolve, reject) => {
-						v.b = true
-						resolve()
+					(q) => {
+						q.value.b = true
+						q.resolve()
 					},
 				])
-				.onError((e, v) => {
+				.onError((e, q) => {
 					expect(e).toEqual(['error'])
-					expect(v).toEqual({ a: false, b: true })
+					expect(q.value).toEqual({ a: false, b: true })
 					done()
 				})
 		})
@@ -942,10 +942,10 @@ describe('FunQ', () => {
 	describe('afterSuccessResolveAll', () => {
 		it('Runs after current function.', (done) => {
 
-			let afterSuccessResolve = jasmine.createSpy('afterSuccessResolve', (v: { n: number }, resolve: TFunQResolve<number>) => {
-				expect(v).toEqual({ n: 42 }, 'Value should be received.')
-				v.n = 111
-				resolve()
+			let afterSuccessResolve = jasmine.createSpy('afterSuccessResolve', (q: IFunQGuts<{n: number}>) => {
+				expect(q.value).toEqual({ n: 42 }, 'Value should be received.')
+				q.value.n = 111
+				q.resolve()
 				done()
 			}).and.callThrough()
 
