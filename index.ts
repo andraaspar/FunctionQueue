@@ -58,16 +58,24 @@ export class FunQ<T = any> {
 	private _isInProcessLoop = false
 	private _isStarted = false
 	private _isFinalized = false
+	private _hasWaitedForFinalize = false
+	private _dontDelayFinalize: boolean
 	private _errorWarningRef: any
 	private _item: FunQItem | undefined
 
 	constructor(o: {
 		// name?: string,
-		value: T,
-	}) {
+		value?: T,
+		dontDelayFinalize?: boolean,
+		dontStart?: boolean,
+	} = {}) {
 		// this.log('constructor', o)
 		// this._name = o.name
-		this._value = o.value
+		if (typeof o.value !== 'undefined') {
+			this._value = o.value
+		}
+		this._dontDelayFinalize = !!o.dontDelayFinalize
+		if (!o.dontStart) this.start()
 	}
 	onValueDoWithCallback(f: TFunQOnResolveAsync<T>, o: { defer?: boolean } = {}) {
 		this.add(new FunQItemOnResolveAsync({
@@ -187,7 +195,7 @@ export class FunQ<T = any> {
 			clearTimeout(this._errorWarningRef)
 			this._isInProcessLoop = true
 			while (this._items.length) {
-				this.execFunction(this._items.shift()!)
+				this.execFunction()
 				if (this._isAwaitingCallback) {
 					this._isInProcessLoop = false
 					return this
@@ -203,7 +211,31 @@ export class FunQ<T = any> {
 	protected isProcessing() {
 		return this._isInProcessLoop || this._isAwaitingCallback
 	}
-	protected execFunction(item: FunQItem) {
+	protected execFunction() {
+		const item = this._items[0]
+		if (!this._dontDelayFinalize) {
+			if (item) {
+				if (item.isFinal) {
+					if (!this._hasWaitedForFinalize) {
+						this.add(new FunQItemOnRejectSync<T>({
+							defer: true,
+							f: (e, v) => {
+								// this.log(`_hasWaitedForFinalize e:`, e, `v:`, v)
+								this._hasWaitedForFinalize = true
+								if (e) throw e
+								else return v
+							},
+							handlesBoth: true,
+							isFinal: false,
+						}))
+						return
+					}
+				} else {
+					this._hasWaitedForFinalize = false
+				}
+			}
+		}
+		this._items.shift()
 		// this.log('execFunction item:', item)
 		this._item = item
 		this._isAwaitingCallback = false

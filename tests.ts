@@ -14,6 +14,7 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontStart: true,
 			})
 
 			expect(q.isStarted()).toBe(false, 'Not started by default.')
@@ -26,13 +27,10 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontDelayFinalize: true,
 			})
 
 			expect(q.isFinalized()).toBe(false, 'Not finalized by default.')
-
-			q.start()
-
-			expect(q.isFinalized()).toBe(false, 'Not finalized by start.')
 
 			q.onFinished(() => { })
 
@@ -49,7 +47,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Value should be received in onValue.')
 					return 111
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'The value from onValue should be received.')
 		})
@@ -61,7 +58,6 @@ describe('FunQ', () => {
 				.onValue(v => {
 					expect(v).toBe(42, 'Value should be received in onValue.')
 				})
-				.start()
 
 			expect(q.getValue()).toBe(42, 'The original value should be received.')
 		})
@@ -78,7 +74,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'The value should be received.')
 					return 111
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'The value from onError should be received.')
 		})
@@ -90,7 +85,6 @@ describe('FunQ', () => {
 				.onValue(v => {
 					return null
 				})
-				.start()
 
 			expect(q.getValue()).toBeNull()
 		})
@@ -102,7 +96,6 @@ describe('FunQ', () => {
 				.onValue(v => {
 					return undefined
 				})
-				.start()
 
 			expect(q.getValue()).toBe(42)
 		})
@@ -116,7 +109,6 @@ describe('FunQ', () => {
 					done()
 					return 111
 				}, { defer: true })
-				.start()
 
 			expect(q.getValue()).toBe(42)
 		})
@@ -137,7 +129,6 @@ describe('FunQ', () => {
 					expect(v).toBe(222, 'The value from 2nd onValue should be received.')
 					return 333
 				})
-				.start()
 
 			expect(q.getValue()).toBe(333, 'The value from 3rd onValue should be received.')
 		})
@@ -154,7 +145,6 @@ describe('FunQ', () => {
 				})
 				.onValue(onValue1)
 				.onValue(onValue2)
-				.start()
 
 			expect(q.getError()).toBe('error', 'The error should be received.')
 			expect(q.getValue()).toBe(42, 'The original value should be received.')
@@ -171,7 +161,6 @@ describe('FunQ', () => {
 				.onValue(v => {
 					throw 'error'
 				})
-				.start()
 
 			setTimeout(() => {
 				expect(consoleError).toHaveBeenCalledTimes(1)
@@ -189,7 +178,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the value.')
 					resolve(111)
 				})
-				.start()
 
 			expect(q.getError()).toBeUndefined('Should not receive an error.')
 			expect(q.getValue()).toBe(111, 'Should receive the value from onValueDoWithCallback.')
@@ -204,7 +192,6 @@ describe('FunQ', () => {
 					resolve(111)
 					reject('error')
 				})
-				.start()
 
 			expect(q.getError()).toBeUndefined('Should not receive an error.')
 			expect(q.getValue()).toBe(111, 'Should receive the value from onValueDoWithCallback.')
@@ -219,7 +206,6 @@ describe('FunQ', () => {
 					reject('error')
 					resolve(111)
 				})
-				.start()
 
 			expect(q.getError()).toBe('error', 'Should receive the error.')
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
@@ -233,7 +219,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the value.')
 					reject()
 				})
-				.start()
 
 			expect(q.getError()).toEqual(new Error(), 'Should receive an error.')
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
@@ -246,7 +231,6 @@ describe('FunQ', () => {
 				.onValueDoWithCallback((v, resolve, reject) => {
 					throw 'error'
 				})
-				.start()
 
 			expect(q.getError()).toEqual('error', 'Should receive error.')
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
@@ -267,7 +251,6 @@ describe('FunQ', () => {
 					expect(v).toBe(111, 'Should receive the value from afterValue.')
 					done()
 				})
-				.start()
 
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
 		})
@@ -284,7 +267,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the original value.')
 					done()
 				})
-				.start()
 		})
 	})
 	describe('afterValueDoWithCallback', () => {
@@ -302,7 +284,6 @@ describe('FunQ', () => {
 					expect(v).toBe(111, 'Should receive the value from afterValue.')
 					done()
 				})
-				.start()
 
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
 		})
@@ -319,7 +300,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the original value.')
 					done()
 				})
-				.start()
 		})
 		it('May throw.', (done) => {
 
@@ -334,7 +314,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the original value.')
 					done()
 				})
-				.start()
 		})
 	})
 	describe('onError', () => {
@@ -346,7 +325,6 @@ describe('FunQ', () => {
 				value: 42,
 			})
 				.onError(onError)
-				.start()
 
 			expect(onError).not.toHaveBeenCalled()
 		})
@@ -363,7 +341,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the value.')
 					return 111
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'Should receive the value from onError.')
 		})
@@ -377,7 +354,6 @@ describe('FunQ', () => {
 				value: 42,
 			})
 				.onErrorDoWithCallback(onErrorDoWithCallback)
-				.start()
 
 			expect(onErrorDoWithCallback).not.toHaveBeenCalled()
 		})
@@ -394,7 +370,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the value.')
 					resolve(111)
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'Should receive the value from onError.')
 		})
@@ -414,7 +389,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the original value.')
 					done()
 				})
-				.start()
 		})
 		it('May throw.', (done) => {
 
@@ -432,7 +406,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the original value.')
 					done()
 				})
-				.start()
 		})
 	})
 	describe('afterError', () => {
@@ -454,7 +427,6 @@ describe('FunQ', () => {
 					expect(v).toBe(111, 'Should receive the value from afterValue.')
 					done()
 				})
-				.start()
 
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
 		})
@@ -474,7 +446,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the original value.')
 					done()
 				})
-				.start()
 		})
 	})
 	describe('afterErrorDoWithCallback', () => {
@@ -496,7 +467,6 @@ describe('FunQ', () => {
 					expect(v).toBe(111, 'Should receive the value from afterErrorDoWithCallback.')
 					done()
 				})
-				.start()
 
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
 		})
@@ -516,7 +486,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Should receive the original value.')
 					done()
 				})
-				.start()
 		})
 	})
 	describe('onErrorOrValue', () => {
@@ -530,7 +499,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Value should be received.')
 					return 111
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'The value from onErrorOrValue should be received.')
 		})
@@ -547,7 +515,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Value should be received.')
 					return 111
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'The value from onErrorOrValue should be received.')
 		})
@@ -563,7 +530,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Value should be received.')
 					resolve(111)
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'The value from onErrorOrValueDoWithCallback should be received.')
 		})
@@ -580,7 +546,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Value should be received.')
 					resolve(111)
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'The value from onErrorOrValueDoWithCallback should be received.')
 		})
@@ -604,7 +569,6 @@ describe('FunQ', () => {
 					expect(v).toBe(111, 'Should receive the value from afterErrorOrValue.')
 					done()
 				})
-				.start()
 
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
 		})
@@ -628,7 +592,6 @@ describe('FunQ', () => {
 					expect(v).toBe(111, 'Should receive the value from afterErrorOrValueDoWithCallback .')
 					done()
 				})
-				.start()
 
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
 		})
@@ -638,13 +601,13 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontDelayFinalize: true,
 			})
 				.onFinished((e, v) => {
 					expect(e).toBeUndefined('No error should occur.')
 					expect(v).toBe(42, 'Value should be received.')
 					return 111
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'The value from onFinished should be received.')
 		})
@@ -652,12 +615,12 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontDelayFinalize: true,
 			})
 				.onFinished((e, v) => {
 					expect(e).toBeUndefined('No error should occur.')
 					expect(v).toBe(42, 'Value should be received.')
 				})
-				.start()
 
 			expect(q.getValue()).toBe(42, 'The original value should be received.')
 		})
@@ -665,6 +628,8 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontStart: true,
+				dontDelayFinalize: true,
 			})
 				.onFinished((e, v) => {
 					expect(e).toBeUndefined('No error should occur.')
@@ -693,6 +658,8 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontStart: true,
+				dontDelayFinalize: true,
 			})
 				.onFinished((e, v) => {
 					expect(e).toBeUndefined('No error should occur 3.')
@@ -716,6 +683,8 @@ describe('FunQ', () => {
 		it('onFinished supports atEnd.', () => {
 			let q = new FunQ({
 				value: 42,
+				dontStart: true,
+				dontDelayFinalize: true,
 			})
 				.onFinished((e, v) => {
 					expect(e).toBeUndefined('No error should occur 1.')
@@ -740,9 +709,9 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontDelayFinalize: true,
 			})
 				.onFinished(() => { })
-				.start()
 
 			expect(() => q.onFinished(() => { })).toThrowError(/finalized/)
 		})
@@ -750,12 +719,34 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontDelayFinalize: true,
 			})
 				.onFinished(() => 111)
-				.start()
 
 			expect(() => q.onFinished(() => 222, { atEnd: true })).not.toThrow()
 			expect(q.getValue()).toBe(222, 'The value from the appended onFinished should be received.')
+		})
+		it('Can delay finalizing.', (done) => {
+
+			let q = new FunQ({
+				value: 42,
+			})
+				.onFinished((e, v) => {
+					expect(v).toBe(222, 'The value from onValue should be received.')
+					return 333
+				})
+				.onValue((v) => {
+					expect(v).toBe(42, 'The original value should be received.')
+					return 111
+				})
+				.onFinished((e, v) => {
+					expect(v).toBe(111, 'The value from onValue should be received.')
+					return 222
+				})
+				.onFinished((e, v) => {
+					expect(v).toBe(333, 'The value from the first onFinished should be received.')
+					done()
+				}, { atEnd: true })
 		})
 	})
 	describe('onFinishedDoWithCallback', () => {
@@ -763,13 +754,13 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontDelayFinalize: true,
 			})
 				.onFinishedDoWithCallback((e, v, resolve, reject) => {
 					expect(e).toBeUndefined('No error should be received.')
 					expect(v).toBe(42, 'Value should be received.')
 					resolve(111)
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'The value from onFinishedDoWithCallback should be received.')
 		})
@@ -777,6 +768,7 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontDelayFinalize: true,
 			})
 				.onValue(v => {
 					throw 'error'
@@ -786,7 +778,6 @@ describe('FunQ', () => {
 					expect(v).toBe(42, 'Value should be received.')
 					resolve(111)
 				})
-				.start()
 
 			expect(q.getValue()).toBe(111, 'The value from onFinishedDoWithCallback should be received.')
 		})
@@ -803,9 +794,9 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontDelayFinalize: true,
 			})
 				.afterFinished(afterFinished)
-				.start()
 
 			expect(q.getValue()).toBe(42, 'The original value should be received.')
 			expect(afterFinished).not.toHaveBeenCalled()
@@ -821,6 +812,8 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontStart: true,
+				dontDelayFinalize: true,
 			})
 				.start()
 				.afterFinished(afterFinished)
@@ -834,6 +827,7 @@ describe('FunQ', () => {
 
 			let q = new FunQ({
 				value: 42,
+				dontDelayFinalize: true,
 			})
 				.onValue(() => {
 					throw 'error'
@@ -848,7 +842,6 @@ describe('FunQ', () => {
 					expect(v).toBe(111, 'Should receive the value from afterFinishedDoWithCallback.')
 					done()
 				}, { atEnd: true })
-				.start()
 
 			expect(q.getValue()).toBe(42, 'Should receive the original value.')
 		})
