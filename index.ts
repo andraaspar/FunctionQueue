@@ -1,5 +1,5 @@
-export type TFunQResolve<T> = (v?: T) => void
-export type TFunQReject<T> = (e?: any, v?: T) => void
+export type TFunQResolve<T> = () => void
+export type TFunQReject<T> = (e?: any) => void
 export type TFunQOnResolveAsync<T> = (v: T, resolve: TFunQResolve<T>, reject: TFunQReject<T>) => void
 export type TFunQOnRejectAsync<T> = (e: any, v: T, resolve: TFunQResolve<T>, reject: TFunQReject<T>) => void
 
@@ -28,10 +28,10 @@ export class FunQItemOnReject<T> extends FunQItem {
 	}
 }
 
-export class FunQ<T = any> {
+export class FunQ<T extends object = {}> {
 
 	// private _name?: string
-	private _value: T
+	private _value: T = {} as T
 	private _error: any
 	private _items: FunQItem[] = []
 	private _isAwaitingCallback = false
@@ -57,15 +57,15 @@ export class FunQ<T = any> {
 		this._dontDelayFinalize = !!o.dontDelayFinalize
 		if (!o.dontStart) this.start()
 	}
-	onValue(f: TFunQOnResolveAsync<T>, o: { defer?: boolean } = {}) {
+	onSuccess(f: TFunQOnResolveAsync<T>, o: { defer?: boolean } = {}) {
 		this.add(new FunQItemOnResolve({
 			f,
 			defer: o.defer,
 		}))
 		return this
 	}
-	afterValue(f: TFunQOnResolveAsync<T>) {
-		return this.onValue(f, { defer: true })
+	afterSuccess(f: TFunQOnResolveAsync<T>) {
+		return this.onSuccess(f, { defer: true })
 	}
 	onError(f: TFunQOnRejectAsync<T>, o: { defer?: boolean } = {}) {
 		this.add(new FunQItemOnReject({
@@ -77,7 +77,7 @@ export class FunQ<T = any> {
 	afterError(f: TFunQOnRejectAsync<T>) {
 		return this.onError(f, { defer: true })
 	}
-	onErrorOrValue(f: TFunQOnRejectAsync<T>, o: { defer?: boolean } = {}) {
+	onDone(f: TFunQOnRejectAsync<T>, o: { defer?: boolean } = {}) {
 		this.add(new FunQItemOnReject({
 			f,
 			handlesBoth: true,
@@ -85,8 +85,8 @@ export class FunQ<T = any> {
 		}))
 		return this
 	}
-	afterErrorOrValue(f: TFunQOnRejectAsync<T>) {
-		return this.onErrorOrValue(f, { defer: true })
+	afterDone(f: TFunQOnRejectAsync<T>) {
+		return this.onDone(f, { defer: true })
 	}
 	onFinished(f: TFunQOnRejectAsync<T>, o: { defer?: boolean, atEnd?: boolean } = {}) {
 		this.add(new FunQItemOnReject({
@@ -101,6 +101,41 @@ export class FunQ<T = any> {
 	afterFinished(f: TFunQOnRejectAsync<T>, o: { defer?: boolean, atEnd?: boolean } = {}) {
 		return this.onFinished(f, { defer: true, ...o })
 	}
+	onSuccessResolveAll(fs: TFunQOnResolveAsync<T>[], o: { defer?: boolean } = {}) {
+		return this.onSuccess((v, resolve, reject) => {
+			let count = fs.length
+			let errors: any[] = []
+			let rejectF: TFunQReject<T> = (e) => {
+				errors.push(e)
+				if (--count <= 0) {
+					reject(errors)
+				}
+			}
+			let resolveF: TFunQResolve<T> = () => {
+				if (--count <= 0) {
+					if (errors.length) {
+						reject(errors)
+					} else {
+						resolve()
+					}
+				}
+			}
+			if (fs && fs.length) {
+				for (let f of fs) {
+					try {
+						f(v, resolveF, rejectF)
+					} catch (e) {
+						rejectF(e)
+					}
+				}
+			} else {
+				resolve()
+			}
+		}, o)
+	}
+	afterSuccessResolveAll(fs: TFunQOnResolveAsync<T>[]) {
+		return this.onSuccessResolveAll(fs, { defer: true })
+	}
 	start() {
 		// this.log('start isStarted:', this._isStarted)
 		if (!this._isStarted) {
@@ -111,7 +146,7 @@ export class FunQ<T = any> {
 	}
 	protected add(item: FunQItem, o: { atEnd?: boolean } = {}) {
 		if (this._isFinalized && (!item.isFinal || !o.atEnd)) {
-			throw new Error(`Adding non-final item to finalized FunQ.`)
+			throw new Error(`[oxm2jh] Adding non-final item to finalized FunQ.`)
 		}
 		let index = this._items.length
 		if (!o.atEnd) {
@@ -141,7 +176,7 @@ export class FunQ<T = any> {
 			}
 			this._isInProcessLoop = false
 			if (this._error) {
-				this._errorWarningRef = setTimeout(() => console.error('Unhandled error in FunQ:', this._error))
+				this._errorWarningRef = setTimeout(() => console.error('[oxm2jn] Unhandled error in FunQ:', this._error))
 			}
 		}
 		return this
@@ -215,21 +250,19 @@ export class FunQ<T = any> {
 					}
 				}
 			} else {
-				throw new Error('Invalid item.')
+				throw new Error('[oxm2ju] Invalid item.')
 			}
 		} catch (e) {
-			this.reject(e, this._value)
+			this.reject(e)
 		}
 	}
-	protected resolve(value?: T) {
+	protected resolve() {
 		// this.log('resolve value:', value)
-		this.setValueIfDefined(value)
 		this.afterResolve()
 	}
-	protected reject(e?: any, value?: T) {
+	protected reject(e?: any) {
 		// this.log('reject e:', e)
 		this._error = e || new Error()
-		this.setValueIfDefined(value)
 		this.afterResolve()
 	}
 	protected afterResolve() {
@@ -238,16 +271,16 @@ export class FunQ<T = any> {
 		this.process()
 	}
 	protected getResolveForItem(item: FunQItem): TFunQResolve<T> {
-		return v => {
+		return () => {
 			if (this._item === item) {
-				this.resolve(v)
+				this.resolve()
 			}
 		}
 	}
 	protected getRejectForItem(item: FunQItem): TFunQReject<T> {
-		return (e, v) => {
+		return (e) => {
 			if (this._item === item) {
-				this.reject(e, v)
+				this.reject(e)
 			}
 		}
 	}
@@ -263,11 +296,6 @@ export class FunQ<T = any> {
 	}
 	getValue(): T {
 		return this._value
-	}
-	protected setValueIfDefined(value?: T) {
-		if (typeof value !== 'undefined') {
-			this._value = value
-		}
 	}
 	// protected log(...rest: any[]) {
 	// 	if (this._name) {
