@@ -16,8 +16,8 @@ Of course, you can’t finalize a Promise, but you can finalize a FunQ:
 ```JS
 function openDb() {
     return (
-        new FunQ({value: {db: null}})
-            .onValueDoWithCallback((value, resolve, reject) => {
+        new FunQ({ value: { db: null } })
+            .onSuccess((value, resolve, reject) => {
                 openDb(/* ... */,
                     result => {
                         value.db = result
@@ -26,15 +26,14 @@ function openDb() {
                     error => reject(error))
             })
             .onFinished((error, value) => {
-                console.error(error)
+                if (error) console.error(error)
                 closeDb(value.db)
             })
-            .start()
     )
 }
 
 loadMyData()
-    .onValueDoWithCallback((value, resolve, reject) => {
+    .onSuccess((value, resolve, reject) => {
         value.db.select(/* ... */,
             result => {
                 value.result = result
@@ -42,7 +41,7 @@ loadMyData()
             },
             error => reject(error))
     })
-    .onValue((value) => {
+    .onSuccess((value) => {
         // Do something with value.result
     })
 ```
@@ -51,25 +50,13 @@ loadMyData()
 
 Because you want something to finish immediately? Like your unit tests?
 
-With FunQ, you have a choice of running callbacks in sync or async, depending on what you need. It comes with the following method pairs:
+With FunQ, you have a choice of running callbacks now (in sync) or deferred (async, just like Promises), depending on what you need. It comes with the following method pairs:
 
-* onValue / afterValue
+* onSuccess / afterSuccess
 * onError / afterError
 * onFinished / afterFinished
 
 Each after... method runs after the current function returns; each on... method runs immediately (once it's their turn).
-
-Also, rather than returning a value, you may opt to use resolve / reject callbacks once the value is ready. These resolve / reject callbacks can also be called synchronously, or asynchronously. To use them, you need to use a different method:
-
-* onValue -> onValueDoWithCallback
-* onError -> onErrorDoWithCallback
-* onFinished -> onFinishedDoWithCallback
-
-The after... methods also work:
-
-* afterValue -> afterValueDoWithCallback
-* afterError -> afterErrorDoWithCallback
-* afterFinished -> afterFinishedDoWithCallback
 
 You have full control, and no surprises.
 
@@ -85,16 +72,44 @@ yarn add fun-q
 
 ## Use
 
+### Simple use
+
 ```JS
 import { FunQ } from 'fun-q'
 
-new FunQ({value: 42})
-    .onValue((value) => 24)
-    .onError((e, value) => NaN)
-    .onFinished((e, value) => {
-        console.log(value)
+new FunQ({ value: { answer: 42 } })
+    .onSuccess((value, resolve, reject) => {
+        value.answer = 11
+        resolve()
     })
-    .start()
+    .onError((e, value, resolve, reject) => {
+        value.answer = 22
+        resolve()
+    })
+    .onFinished((e, value, resolve, reject) => {
+        console.log(value.answer) // 11
+    })
+```
+
+### Parallel execution
+
+```JS
+import { FunQ } from 'fun-q'
+
+new FunQ({ value: { a: false, b: false } })
+    .onSuccessResolveAll([
+        (v, resolve) => {
+            v.a = true
+            resolve()
+        },
+        (v, resolve) => {
+            v.b = true
+            resolve()
+        },
+    ])
+    .onFinished((e, v) => {
+        console.log(v) // { a: true, b: true }
+    })
 ```
 
 Check the [unit tests](https://github.com/andraaspar/fun-q/blob/master/tests.ts) for more examples.
