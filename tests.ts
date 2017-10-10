@@ -1,4 +1,4 @@
-import { FunQ, TFunQOnResolveAsync } from './index'
+import { FunQ, TFunQResolve } from './index'
 
 describe('FunQ', () => {
 	describe('instance', () => {
