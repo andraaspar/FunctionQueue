@@ -770,7 +770,7 @@ describe('FunQ', () => {
 	describe('afterFinished', () => {
 		it('Runs after current function.', (done) => {
 
-			let afterFinished = jasmine.createSpy('afterFinished', (e: any, q: IFunQGuts<{n: number}>) => {
+			let afterFinished = jasmine.createSpy('afterFinished', (e: any, q: IFunQGuts<{ n: number }>) => {
 				expect(e).toBeUndefined('No error should occur 1.')
 				expect(q.data).toEqual({ n: 42 }, 'Data should be received.')
 				done()
@@ -788,7 +788,7 @@ describe('FunQ', () => {
 		})
 		it('Works if added after start.', (done) => {
 
-			let afterFinished = jasmine.createSpy('afterFinished', (e: any, q: IFunQGuts<{n: number}>) => {
+			let afterFinished = jasmine.createSpy('afterFinished', (e: any, q: IFunQGuts<{ n: number }>) => {
 				expect(e).toBeUndefined('No error should occur 1.')
 				expect(q.data).toEqual({ n: 42 }, 'Data should be received.')
 				done()
@@ -921,11 +921,33 @@ describe('FunQ', () => {
 					done()
 				})
 		})
+		it('Runs async.', (done) => {
+			let q = new FunQ({ data: { a: false, b: false } })
+				.onSuccessAwaitAll([
+					(q) => {
+						setTimeout(() => {
+							q.data.a = true
+							q.resolve()
+						})
+					},
+					(q) => {
+						setTimeout(() => {
+							q.data.b = true
+							q.resolve()
+						})
+					},
+				])
+				.onSuccess(q => {
+					expect(q.data).toEqual({ a: true, b: true }, 'Async functions should all have run.')
+					done()
+				})
+			expect(q.getData()).toEqual({ a: false, b: false }, 'Async functions should not have run yet.')
+		})
 	})
 	describe('afterSuccessAwaitAll', () => {
 		it('Runs after current function.', (done) => {
 
-			let afterSuccessAwaitAll = jasmine.createSpy('afterSuccessAwaitAll', (q: IFunQGuts<{n: number}>) => {
+			let afterSuccessAwaitAll = jasmine.createSpy('afterSuccessAwaitAll', (q: IFunQGuts<{ n: number }>) => {
 				expect(q.data).toEqual({ n: 42 }, 'Data should be received.')
 				q.data.n = 111
 				q.resolve()

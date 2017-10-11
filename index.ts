@@ -138,7 +138,7 @@ export class FunQ<T extends object = {}> {
 		return this.onFinished(f, { defer: true, ...o })
 	}
 	onSuccessAwaitAll(fs: TFunQOnResolveAsync<T>[], o: { defer?: boolean } = {}) {
-		return this.onSuccess((q) => {
+		return this.onSuccessAwait((q) => {
 			let count = fs.length
 			let errors: any[] = []
 			let rejectF: TFunQReject<T> = (e) => {
